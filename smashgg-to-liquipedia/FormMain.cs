@@ -2830,13 +2830,7 @@ namespace smashgg_to_liquipedia
         {
             if (radioButton4DE4S.Checked) 
             {
-                richTextBoxExLpFinalBracket.Text = @"{{4DE4SBracket2
-|l1placement=7-8
-|l2placement=5-6
-|l3placement=4
-|l4placement=3
-|r5loserplacement=2
-|r5winnerplacement=1
+                richTextBoxExLpFinalBracket.Text = @"{{LegacyBracket|Bracket/4U4L2DSL1D|4DE4SBracket2|type=solo|id=
 
 <!-- WINNERS BRACKET -->
 |r2m1p1= |r2m1p1flag= |r2m1p1score=
@@ -2884,11 +2878,7 @@ namespace smashgg_to_liquipedia
             }
             else if (radioButtonDEFinal.Checked) 
             {
-                richTextBoxExLpFinalBracket.Text = @"{{DEFinalSmwBracket
-|l1placement=4
-|r2placement=3
-|r3loserplacement=2
-|r3winnerplacement=1
+                richTextBoxExLpFinalBracket.Text = @"{{LegacyBracket|Bracket/2U2L1D|DEFinalSmwBracket|type=solo|id=
 
 <!-- FROM WINNERS -->
 |r1m1p1= |r1m1p1flag= |r1m1p1score=
