@@ -648,11 +648,11 @@ namespace smashgg_to_liquipedia
             // Ouptut the prize pool header
             if (selectedEvent.Type == Event.EventType.Singles)
             {
-                richTextBoxLpOutput.Text = "{{prize pool start}}\r\n";
+                richTextBoxLpOutput.Text = "{{SoloPrizePool\r\n";
             }
             else if (selectedEvent.Type == Event.EventType.Doubles)
             {
-                richTextBoxLpOutput.Text = "{{prize pool start doubles}}\r\n";
+                richTextBoxLpOutput.Text = "{{DuoPrizePool\r\n";
             }
 
             // Loop through the records to remove placements of 0
@@ -706,11 +706,11 @@ namespace smashgg_to_liquipedia
 
             if (selectedEvent.Type == Event.EventType.Singles)
             {
-                richTextBoxLpOutput.Text += "{{prize pool end}}\r\n";
+                richTextBoxLpOutput.Text += "}}\r\n";
             }
             else if (selectedEvent.Type == Event.EventType.Doubles)
             {
-                richTextBoxLpOutput.Text += "{{prize pool end doubles}}\r\n";
+                richTextBoxLpOutput.Text += "}}\r\n";
             }
 
             richTextBoxLpOutput.Text = richTextBoxLpOutput.Text.Trim();
@@ -1710,14 +1710,7 @@ namespace smashgg_to_liquipedia
         private void OutputPrizePoolTable(List<Standing> standings, int startEntrant, int rows)
         {
             // Output the start of the prize pool slot
-            if (selectedEvent.Type == Event.EventType.Singles)
-            {
-                richTextBoxLpOutput.Text += "{{prize pool slot|place=";
-            }
-            else if (selectedEvent.Type == Event.EventType.Doubles)
-            {
-                richTextBoxLpOutput.Text += "{{prize pool slot doubles|place=";
-            }
+            richTextBoxLpOutput.Text += "|{{Slot|place=";
 
             // Output the place
             if (rows == 1)
@@ -1739,9 +1732,9 @@ namespace smashgg_to_liquipedia
                 for (int i = 0; i < rows; i++)
                 {
                     // Assume there is only 1 player output their info
-                    richTextBoxLpOutput.Text += "|" + standings[startEntrant + i].entrant.participants[0].gamerTag +
-                                                "|flag" + (i + 1) + "=" + standings[startEntrant + i].entrant.participants[0].user.location.country +
-                                                "|heads" + (i + 1) + "= |team" + (i + 1) + "=\r\n";
+                    richTextBoxLpOutput.Text += "|{{Opponent|" + standings[startEntrant + i].entrant.participants[0].gamerTag +
+                                                "|flag=" + standings[startEntrant + i].entrant.participants[0].user.location.country +
+                                                "|chars= |team=}}\r\n";
                 }
             }
             else if (selectedEvent.Type == Event.EventType.Doubles)
@@ -1750,12 +1743,12 @@ namespace smashgg_to_liquipedia
                 for (int i = 0; i < rows; i++)
                 {
                     // Assume there are 2 players, and output their info
-                    richTextBoxLpOutput.Text += "|" + standings[startEntrant + i].entrant.participants[0].gamerTag +
-                                                "|flag" + (i + 1) + "p1=" + standings[startEntrant + i].entrant.participants[0].user.location.country +
-                                                "|heads" + (i + 1) + "p1=" +
-                                                "|" + standings[startEntrant + i].entrant.participants[1].gamerTag +
-                                                "|flag" + (i + 1) + "p2=" + standings[startEntrant + i].entrant.participants[1].user.location.country +
-                                                "|heads" + (i + 1) + "p2=\r\n";
+                    richTextBoxLpOutput.Text += "|{{Opponent|p1=" + standings[startEntrant + i].entrant.participants[0].gamerTag +
+                                                "|p1flag=" + standings[startEntrant + i].entrant.participants[0].user.location.country +
+                                                "|p1chars=" +
+                                                "|p2=" + standings[startEntrant + i].entrant.participants[1].gamerTag +
+                                                "|p2flag=" + standings[startEntrant + i].entrant.participants[1].user.location.country +
+                                                "|p2chars=" + (i + 1) + "}}\r\n";
                 }
             }
 
