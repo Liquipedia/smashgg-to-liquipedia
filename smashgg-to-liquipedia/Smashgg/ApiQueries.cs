@@ -7,6 +7,7 @@ using GraphQL;
 using GraphQL.Client.Http;
 using GraphQL.Client.Serializer.SystemTextJson;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Xml;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -93,7 +94,7 @@ namespace smashgg_to_liquipedia
 
             // Make a new client, set the endpoint, set the token
             graphQLClient = new GraphQLHttpClient(endpoint, new SystemTextJsonSerializer());
-            graphQLClient.HttpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer " + token);
+            graphQLClient.HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             
 
@@ -104,7 +105,7 @@ namespace smashgg_to_liquipedia
         public void SetToken(string token)
         {
             graphQLClient.HttpClient.DefaultRequestHeaders.Clear();
-            graphQLClient.HttpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer " + token);
+            graphQLClient.HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
 
         public void SetEndpoint(string endpoint)
