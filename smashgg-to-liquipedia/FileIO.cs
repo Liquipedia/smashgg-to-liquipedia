@@ -1,9 +1,9 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace smashgg_to_liquipedia
@@ -25,7 +25,7 @@ namespace smashgg_to_liquipedia
             TextWriter writer = null;
             try
             {
-                var contentsToWriteToFile = JsonConvert.SerializeObject(objectToWrite);
+                var contentsToWriteToFile = JsonSerializer.Serialize(objectToWrite, JsonExtensions.Options);
                 writer = new StreamWriter(filePath, append);
                 writer.Write(contentsToWriteToFile);
             }
@@ -50,7 +50,7 @@ namespace smashgg_to_liquipedia
             {
                 reader = new StreamReader(filePath);
                 var fileContents = reader.ReadToEnd();
-                return JsonConvert.DeserializeObject<T>(fileContents);
+                return JsonSerializer.Deserialize<T>(fileContents, JsonExtensions.Options);
             }
             finally
             {

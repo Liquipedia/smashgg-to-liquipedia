@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace smashgg_to_liquipedia.Smashgg.Schema
@@ -15,6 +16,7 @@ namespace smashgg_to_liquipedia.Smashgg.Schema
         public int numSeeds { get; set; }
         public string name { get; set; }
         public int groupCount { get; set; }
+        [JsonPropertyName("phaseGroups")]
         public PhaseGroupConnection phasegroups { get; set; }
 
         // Internal fields

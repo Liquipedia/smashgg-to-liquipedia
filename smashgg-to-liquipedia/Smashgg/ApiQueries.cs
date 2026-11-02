@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using GraphQL.Common.Request;
-using GraphQL.Client;
+using GraphQL;
+using GraphQL.Client.Http;
+using GraphQL.Client.Serializer.SystemTextJson;
 using System.Net;
 using System.Xml;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
-using GraphQL.Common.Response;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using smashgg_to_liquipedia.Smashgg.Schema;
 using smashgg_to_liquipedia.Smashgg;
 using Esendex.TokenBucket;
@@ -19,7 +19,7 @@ namespace smashgg_to_liquipedia
 {
     class ApiQueries
     {
-        private GraphQLClient graphQLClient;
+        private GraphQLHttpClient graphQLClient;
         PlayerDatabase playerdb;
         Standardization standardization;
 
@@ -92,8 +92,8 @@ namespace smashgg_to_liquipedia
             }
 
             // Make a new client, set the endpoint, set the token
-            graphQLClient = new GraphQLClient(endpoint);
-            graphQLClient.DefaultRequestHeaders.Add("Authorization", $"Bearer " + token);
+            graphQLClient = new GraphQLHttpClient(endpoint, new SystemTextJsonSerializer());
+            graphQLClient.HttpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer " + token);
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             
 
@@ -103,13 +103,13 @@ namespace smashgg_to_liquipedia
 
         public void SetToken(string token)
         {
-            graphQLClient.DefaultRequestHeaders.Clear();
-            graphQLClient.DefaultRequestHeaders.Add("Authorization", $"Bearer " + token);
+            graphQLClient.HttpClient.DefaultRequestHeaders.Clear();
+            graphQLClient.HttpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer " + token);
         }
 
         public void SetEndpoint(string endpoint)
         {
-            graphQLClient.EndPoint = new System.Uri(endpoint);
+            graphQLClient.Options.EndPoint = new System.Uri(endpoint);
         }
 
         /// <summary>
@@ -118,18 +118,26 @@ namespace smashgg_to_liquipedia
         /// </summary>
         /// <param name="request">GraphQL request</param>
         /// <returns>JSON data</returns>
-        private GraphQLResponse SendRequest(GraphQLRequest request)
+        private GraphQLResponse<JsonObject> SendRequest(GraphQLRequest request)
         {
             int tries = 3;
 
-            GraphQLResponse response;
+            GraphQLResponse<JsonObject> response;
 
             // Check for data
             while (tries > 0)
             {
                 // Consume a token and send the api query
                 bucket.Consume(1);
-                response = graphQLClient.PostAsync(request).Result;
+                try
+                {
+                    response = Task.Run(() => graphQLClient.SendQueryAsync<JsonObject>(request)).Result;
+                }
+                catch (AggregateException ex) when (ex.InnerException is GraphQLHttpRequestException httpException)
+                {
+                    WriteLineToLog("Request failed with status " + httpException.StatusCode);
+                    response = new GraphQLResponse<JsonObject>();
+                }
 
                 // Write errors
                 if (response.Errors != null)
@@ -211,13 +219,13 @@ namespace smashgg_to_liquipedia
             };
 
             
-            GraphQLResponse response = SendRequest(eventsRequest);
+            GraphQLResponse<JsonObject> response = SendRequest(eventsRequest);
             Tournament tournament = new Tournament();
 
             if (response != null && response.Data != null)
             {
                 // Parse the json response
-                tournament = JsonConvert.DeserializeObject<Tournament>(response.Data.tournament.ToString());
+                tournament = response.Data["tournament"]?.Deserialize<Tournament>(JsonExtensions.Options);
                 tournament.slug = tournamentSlug;
 
                 // For each event
@@ -348,7 +356,7 @@ namespace smashgg_to_liquipedia
                 page = page
             };
 
-            GraphQLResponse response = SendRequest(eventsRequest);
+            GraphQLResponse<JsonObject> response = SendRequest(eventsRequest);
             Tournament tournament = new Tournament();
 
             // Create a blank event list attached to the tournament
@@ -360,7 +368,7 @@ namespace smashgg_to_liquipedia
 
                 // Parse the json response
                 Event singleEvent = new Event();
-                singleEvent = JsonConvert.DeserializeObject<Event>(response.Data.@event.ToString());
+                singleEvent = response.Data["event"]?.Deserialize<Event>(JsonExtensions.Options);
                 tournament.events.Add(singleEvent);
 
                 // For each event
@@ -580,11 +588,11 @@ namespace smashgg_to_liquipedia
                         };
                     }
 
-                    GraphQLResponse setsResponse = SendRequest(setsRequest);
+                    GraphQLResponse<JsonObject> setsResponse = SendRequest(setsRequest);
                     if (setsResponse != null)
                     {
                         // Parse the json response
-                        tempPhaseGroup = JsonConvert.DeserializeObject<PhaseGroup>(setsResponse.Data.phaseGroup.ToString());
+                        tempPhaseGroup = setsResponse.Data["phaseGroup"]?.Deserialize<PhaseGroup>(JsonExtensions.Options);
                         setList.AddRange(tempPhaseGroup.sets.nodes);
                         WriteLineToLog("Got sets for " + phaseGroupId + " (pg " + page + " of " + tempPhaseGroup.sets.pageInfo.totalPages + ")");
 
@@ -691,11 +699,11 @@ namespace smashgg_to_liquipedia
                     }
                     
 
-                    GraphQLResponse entrantsResponse = SendRequest(entrantsRequest);
+                    GraphQLResponse<JsonObject> entrantsResponse = SendRequest(entrantsRequest);
                     if (entrantsResponse != null)
                     {
                         // Parse the json response
-                        tempEvent = JsonConvert.DeserializeObject<Event>(entrantsResponse.Data["event"].ToString());
+                        tempEvent = entrantsResponse.Data["event"]?.Deserialize<Event>(JsonExtensions.Options);
                         entrantList.AddRange(tempEvent.entrants.nodes);
                         WriteLineToLog("Read page " + page + " of entrants");
 
@@ -775,12 +783,12 @@ namespace smashgg_to_liquipedia
                 }
             };
 
-            GraphQLResponse response = SendRequest(standingsRequest);
+            GraphQLResponse<JsonObject> response = SendRequest(standingsRequest);
             Event eventResults = new Event();
             if (response != null)
             {
                 // Parse the json response
-                eventResults = JsonConvert.DeserializeObject<Event>(response.Data.@event.ToString());
+                eventResults = response.Data["event"]?.Deserialize<Event>(JsonExtensions.Options);
             }
             else
             {
@@ -850,12 +858,12 @@ namespace smashgg_to_liquipedia
                 }
             };
 
-            GraphQLResponse response = SendRequest(pgStandingsRequest);
+            GraphQLResponse<JsonObject> response = SendRequest(pgStandingsRequest);
             PhaseGroup phaseGroupResults = new PhaseGroup();
             if (response != null)
             {
                 // Parse the json response
-                phaseGroupResults = JsonConvert.DeserializeObject<PhaseGroup>(response.Data.@phaseGroup.ToString());
+                phaseGroupResults = response.Data["phaseGroup"]?.Deserialize<PhaseGroup>(JsonExtensions.Options);
             }
             else
             {

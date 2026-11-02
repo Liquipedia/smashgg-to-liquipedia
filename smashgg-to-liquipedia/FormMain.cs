@@ -11,8 +11,6 @@ using System.Windows.Forms;
 using System.Net;
 using System.IO;
 using System.Runtime.InteropServices;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.IO.Compression;
 using smashgg_to_liquipedia.Smashgg.Schema;
 using smashgg_to_liquipedia.Smashgg;
