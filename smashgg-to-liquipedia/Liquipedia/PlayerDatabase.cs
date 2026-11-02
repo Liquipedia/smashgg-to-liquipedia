@@ -1,10 +1,9 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace smashgg_to_liquipedia
@@ -13,8 +12,6 @@ namespace smashgg_to_liquipedia
     {
         private static string SMASH_DB_FILENAME = @"SmashAkaDatabase.json";
         private static string FIGHTERS_DB_FILENAME = @"FightersAkaDatabase.json";
-        private static string REVID_PATH = @"parse.revid";
-        private static string WIKITEXT_PATH = @"parse.wikitext.*";
 
         private static string TEMPLATE_START = @"{{AltSlot";
         private static string TEMPLATE_END = @"}}";
@@ -70,14 +67,14 @@ namespace smashgg_to_liquipedia
             string json = string.Empty;
             try
             {
-                using (StreamReader file = new StreamReader(filename))
+                using (FileStream file = File.OpenRead(filename))
                 {
-                    using (JsonTextReader reader = new JsonTextReader(file))
+                    using (JsonDocument doc = JsonDocument.Parse(file))
                     {
-                        JObject obj = (JObject)JToken.ReadFrom(reader);
+                        JsonElement parse = doc.RootElement.GetProperty("parse");
 
-                        revID = obj.SelectToken(REVID_PATH).Value<int>();
-                        json = obj.SelectToken(WIKITEXT_PATH).Value<string>();
+                        revID = parse.GetProperty("revid").GetInt32();
+                        json = parse.GetProperty("wikitext").GetProperty("*").GetString();
                         ParseWikitext(json);
 
                         return true;

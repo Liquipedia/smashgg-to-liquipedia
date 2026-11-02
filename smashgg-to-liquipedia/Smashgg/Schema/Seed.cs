@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +18,7 @@ namespace smashgg_to_liquipedia.Smashgg.Schema
         public bool isBye { get; set; }
         public List<Standing> standings { get; set; }
 
-        [JsonProperty("placement")]
+        [JsonPropertyName("placement")]
         public int? Placement
         {
             get

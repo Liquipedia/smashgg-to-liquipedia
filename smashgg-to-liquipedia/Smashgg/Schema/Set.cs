@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace smashgg_to_liquipedia.Smashgg.Schema
 {
@@ -50,7 +50,7 @@ namespace smashgg_to_liquipedia.Smashgg.Schema
             }
         }
 
-        [JsonProperty("displayScore")]
+        [JsonPropertyName("displayScore")]
         public string DisplayScore
         {
             get
