@@ -162,7 +162,7 @@ namespace smashgg_to_liquipedia
                 else
                 {
                     WriteLineToLog("No data. Retrying...");
-                    Task.Delay(5000).Wait();
+                    await Task.Delay(5000);
                     tries--;
                 }
             }
