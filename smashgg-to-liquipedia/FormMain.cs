@@ -9,9 +9,10 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.IO.Compression;
 using smashgg_to_liquipedia.Smashgg.Schema;
 using smashgg_to_liquipedia.Smashgg;
 
@@ -19,8 +20,9 @@ namespace smashgg_to_liquipedia
 {
     public partial class FormMain : Form, IFormMain
     {
-        static string SMASH_DB_URI = "http://liquipedia.net/smash/api.php?action=parse&page=Liquipedia:Players_Regex&prop=revid|wikitext&format=json";
-        static string FIGHTERS_DB_URI = "http://liquipedia.net/fighters/api.php?action=parse&page=Liquipedia:Players_Regex&prop=revid|wikitext&format=json";
+        static Version Version => System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+
+        private static HttpClient httpClient;
 
         public enum BracketSide { Winners, Losers }
 
@@ -52,8 +54,7 @@ namespace smashgg_to_liquipedia
             InitializeComponent();
 
             // Display version
-            Version version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
-            this.Text = "Start.gg to Liquipedia v" + $"{version}";
+            this.Text = "Start.gg to Liquipedia v" + $"{Version}";
 
             try
             {
@@ -834,6 +835,28 @@ namespace smashgg_to_liquipedia
             UnlockControls();
         }
 
+        private static async Task<string> GetAkaFromWiki(PlayerDatabase.DbSource source)
+        {
+            if (httpClient == null)
+            {
+                httpClient = new HttpClient(
+                    new HttpClientHandler
+                    {
+                        AutomaticDecompression = DecompressionMethods.GZip
+                    }
+                )
+                {
+                    BaseAddress = new Uri("https://liquipedia.net"),
+                };
+                httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("smashgg-to-liquipedia", $"{Version}"));
+                httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("(https://github.com/Liquipedia/smashgg-to-liquipedia)"));
+            }
+
+            return await httpClient.GetStringAsync(
+                $"{source.ToString().ToLower()}/api.php?action=parse&page=Liquipedia:Players_Regex&prop=revid|wikitext&format=json"
+            );
+        }
+
         /// <summary>
         /// Retrieves a regex AKA database from Liquipedia, and parses it
         /// </summary>
@@ -841,23 +864,15 @@ namespace smashgg_to_liquipedia
         /// <param name="e"></param>
         private void buttonAKA_Click(object sender, EventArgs e)
         {
-            WebClient client = new WebClient();
-            client.Headers[HttpRequestHeader.AcceptEncoding] = "gzip";
-            client.Headers[HttpRequestHeader.UserAgent] = "smashgg-to-liquipedia (https://github.com/spazer/smashgg-to-liquipedia)";
-
             // Decide on the URL to use
             string json = string.Empty;
             if (radioButtonSmash.Checked)
             {
-                var responseStream = new GZipStream(client.OpenRead(SMASH_DB_URI), CompressionMode.Decompress);
-                var reader = new StreamReader(responseStream);
-                json = reader.ReadToEnd();
+                json = Task.Run(() => GetAkaFromWiki(PlayerDatabase.DbSource.Smash)).Result;
             }
             else if (radioButtonFighters.Checked)
             {
-                var responseStream = new GZipStream(client.OpenRead(FIGHTERS_DB_URI), CompressionMode.Decompress);
-                var reader = new StreamReader(responseStream);
-                json = reader.ReadToEnd();
+                json = Task.Run(() => GetAkaFromWiki(PlayerDatabase.DbSource.Fighters)).Result;
             }
             else
             {
