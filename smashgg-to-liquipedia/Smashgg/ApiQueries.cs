@@ -119,7 +119,7 @@ namespace smashgg_to_liquipedia
         /// </summary>
         /// <param name="request">GraphQL request</param>
         /// <returns>JSON data</returns>
-        private GraphQLResponse<JsonObject> SendRequest(GraphQLRequest request)
+        private async Task<GraphQLResponse<JsonObject>> SendRequest(GraphQLRequest request)
         {
             int tries = 3;
 
@@ -132,9 +132,9 @@ namespace smashgg_to_liquipedia
                 bucket.Consume(1);
                 try
                 {
-                    response = Task.Run(() => graphQLClient.SendQueryAsync<JsonObject>(request)).Result;
+                    response = await graphQLClient.SendQueryAsync<JsonObject>(request);
                 }
-                catch (AggregateException ex) when (ex.InnerException is GraphQLHttpRequestException httpException)
+                catch (GraphQLHttpRequestException httpException)
                 {
                     WriteLineToLog("Request failed with status " + httpException.StatusCode);
                     response = new GraphQLResponse<JsonObject>();
@@ -220,7 +220,7 @@ namespace smashgg_to_liquipedia
             };
 
             
-            GraphQLResponse<JsonObject> response = SendRequest(eventsRequest);
+            GraphQLResponse<JsonObject> response = Task.Run(() => SendRequest(eventsRequest)).Result;
             Tournament tournament = new Tournament();
 
             if (response != null && response.Data != null)
@@ -357,7 +357,7 @@ namespace smashgg_to_liquipedia
                 page = page
             };
 
-            GraphQLResponse<JsonObject> response = SendRequest(eventsRequest);
+            GraphQLResponse<JsonObject> response = Task.Run(() => SendRequest(eventsRequest)).Result;
             Tournament tournament = new Tournament();
 
             // Create a blank event list attached to the tournament
@@ -589,7 +589,7 @@ namespace smashgg_to_liquipedia
                         };
                     }
 
-                    GraphQLResponse<JsonObject> setsResponse = SendRequest(setsRequest);
+                    GraphQLResponse<JsonObject> setsResponse = Task.Run(() => SendRequest(setsRequest)).Result;
                     if (setsResponse != null)
                     {
                         // Parse the json response
@@ -700,7 +700,7 @@ namespace smashgg_to_liquipedia
                     }
                     
 
-                    GraphQLResponse<JsonObject> entrantsResponse = SendRequest(entrantsRequest);
+                    GraphQLResponse<JsonObject> entrantsResponse = Task.Run(() => SendRequest(entrantsRequest)).Result;
                     if (entrantsResponse != null)
                     {
                         // Parse the json response
@@ -784,7 +784,7 @@ namespace smashgg_to_liquipedia
                 }
             };
 
-            GraphQLResponse<JsonObject> response = SendRequest(standingsRequest);
+            GraphQLResponse<JsonObject> response = Task.Run(() => SendRequest(standingsRequest)).Result;
             Event eventResults = new Event();
             if (response != null)
             {
@@ -859,7 +859,7 @@ namespace smashgg_to_liquipedia
                 }
             };
 
-            GraphQLResponse<JsonObject> response = SendRequest(pgStandingsRequest);
+            GraphQLResponse<JsonObject> response = Task.Run(() => SendRequest(pgStandingsRequest)).Result;
             PhaseGroup phaseGroupResults = new PhaseGroup();
             if (response != null)
             {
