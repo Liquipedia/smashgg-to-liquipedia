@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading.RateLimiting;
 using GraphQL;
 using GraphQL.Client.Http;
 using GraphQL.Client.Serializer.SystemTextJson;
@@ -13,7 +14,6 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using smashgg_to_liquipedia.Smashgg.Schema;
 using smashgg_to_liquipedia.Smashgg;
-using Esendex.TokenBucket;
 using System.IO;
 
 namespace smashgg_to_liquipedia
@@ -24,7 +24,7 @@ namespace smashgg_to_liquipedia
         PlayerDatabase playerdb;
         Standardization standardization;
 
-        private ITokenBucket bucket;
+        private RateLimiter rateLimiter;
         private readonly IFormMain form;
 
         private const int PER_PAGE_SETS = 60;
@@ -65,7 +65,13 @@ namespace smashgg_to_liquipedia
             this.playerdb = playerdb;
             this.form = form;
 
-            bucket = TokenBuckets.Construct().WithCapacity(50).WithFixedIntervalRefillStrategy(20, TimeSpan.FromSeconds(60)).Build();
+            rateLimiter = new TokenBucketRateLimiter(new TokenBucketRateLimiterOptions
+            {
+                QueueLimit = int.MaxValue,
+                TokenLimit = 50,
+                TokensPerPeriod = 20,
+                ReplenishmentPeriod = TimeSpan.FromSeconds(60)
+            });
 
             // Get the endpoint
             string endpoint = string.Empty;
@@ -121,6 +127,32 @@ namespace smashgg_to_liquipedia
         /// <returns>JSON data</returns>
         private GraphQLResponse<JsonObject> SendRequest(GraphQLRequest request)
         {
+            // Run off the UI thread to avoid deadlocking on the caller's synchronization context.
+            // Log lines are buffered and written here, on the calling thread, because the form's
+            // log control must only be touched from the UI thread (which is blocked until the
+            // request completes, so Control.Invoke would deadlock).
+            List<string> log = new List<string>();
+            try
+            {
+                return Task.Run(() => SendRequestAsync(request, log)).Result;
+            }
+            finally
+            {
+                foreach (string line in log)
+                {
+                    WriteLineToLog(line);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Sends an API request to smash.gg asynchronously
+        /// </summary>
+        /// <param name="request">GraphQL request</param>
+        /// <param name="log">Buffer for log lines; must not be written to the form from this method</param>
+        /// <returns>JSON data</returns>
+        private async Task<GraphQLResponse<JsonObject>> SendRequestAsync(GraphQLRequest request, List<string> log)
+        {
             int tries = 3;
 
             GraphQLResponse<JsonObject> response;
@@ -129,14 +161,14 @@ namespace smashgg_to_liquipedia
             while (tries > 0)
             {
                 // Consume a token and send the api query
-                bucket.Consume(1);
+                await rateLimiter.AcquireAsync(1);
                 try
                 {
-                    response = Task.Run(() => graphQLClient.SendQueryAsync<JsonObject>(request)).Result;
+                    response = await graphQLClient.SendQueryAsync<JsonObject>(request);
                 }
-                catch (AggregateException ex) when (ex.InnerException is GraphQLHttpRequestException httpException)
+                catch (GraphQLHttpRequestException httpException)
                 {
-                    WriteLineToLog("Request failed with status " + httpException.StatusCode);
+                    log.Add("Request failed with status " + httpException.StatusCode);
                     response = new GraphQLResponse<JsonObject>();
                 }
 
@@ -145,7 +177,7 @@ namespace smashgg_to_liquipedia
                 {
                     foreach (var error in response.Errors)
                     {
-                        WriteLineToLog(error.Message + "/" + error.Locations);
+                        log.Add(error.Message + "/" + error.Locations);
                     }
                 }
 
@@ -156,8 +188,8 @@ namespace smashgg_to_liquipedia
                 }
                 else
                 {
-                    WriteLineToLog("No data. Retrying...");
-                    Task.Delay(5000).Wait();
+                    log.Add("No data. Retrying...");
+                    await Task.Delay(5000);
                     tries--;
                 }
             }
