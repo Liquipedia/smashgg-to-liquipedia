@@ -67,6 +67,7 @@ namespace smashgg_to_liquipedia
 
             rateLimiter = new TokenBucketRateLimiter(new TokenBucketRateLimiterOptions
             {
+                QueueLimit = int.MaxValue,
                 TokenLimit = 50,
                 TokensPerPeriod = 20,
                 ReplenishmentPeriod = TimeSpan.FromSeconds(60)
