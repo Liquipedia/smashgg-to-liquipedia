@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading.RateLimiting;
 using GraphQL;
 using GraphQL.Client.Http;
 using GraphQL.Client.Serializer.SystemTextJson;
@@ -13,7 +14,6 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using smashgg_to_liquipedia.Smashgg.Schema;
 using smashgg_to_liquipedia.Smashgg;
-using Esendex.TokenBucket;
 using System.IO;
 
 namespace smashgg_to_liquipedia
@@ -24,7 +24,7 @@ namespace smashgg_to_liquipedia
         PlayerDatabase playerdb;
         Standardization standardization;
 
-        private ITokenBucket bucket;
+        private RateLimiter rateLimiter;
         private readonly IFormMain form;
 
         private const int PER_PAGE_SETS = 60;
@@ -65,7 +65,12 @@ namespace smashgg_to_liquipedia
             this.playerdb = playerdb;
             this.form = form;
 
-            bucket = TokenBuckets.Construct().WithCapacity(50).WithFixedIntervalRefillStrategy(20, TimeSpan.FromSeconds(60)).Build();
+            rateLimiter = new TokenBucketRateLimiter(new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = 50,
+                TokensPerPeriod = 20,
+                ReplenishmentPeriod = TimeSpan.FromSeconds(60)
+            });
 
             // Get the endpoint
             string endpoint = string.Empty;
@@ -129,7 +134,7 @@ namespace smashgg_to_liquipedia
             while (tries > 0)
             {
                 // Consume a token and send the api query
-                bucket.Consume(1);
+                await rateLimiter.AcquireAsync(1);
                 try
                 {
                     response = await graphQLClient.SendQueryAsync<JsonObject>(request);
