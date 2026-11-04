@@ -125,7 +125,33 @@ namespace smashgg_to_liquipedia
         /// </summary>
         /// <param name="request">GraphQL request</param>
         /// <returns>JSON data</returns>
-        private async Task<GraphQLResponse<JsonObject>> SendRequest(GraphQLRequest request)
+        private GraphQLResponse<JsonObject> SendRequest(GraphQLRequest request)
+        {
+            // Run off the UI thread to avoid deadlocking on the caller's synchronization context.
+            // Log lines are buffered and written here, on the calling thread, because the form's
+            // log control must only be touched from the UI thread (which is blocked until the
+            // request completes, so Control.Invoke would deadlock).
+            List<string> log = new List<string>();
+            try
+            {
+                return Task.Run(() => SendRequestAsync(request, log)).Result;
+            }
+            finally
+            {
+                foreach (string line in log)
+                {
+                    WriteLineToLog(line);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Sends an API request to smash.gg asynchronously
+        /// </summary>
+        /// <param name="request">GraphQL request</param>
+        /// <param name="log">Buffer for log lines; must not be written to the form from this method</param>
+        /// <returns>JSON data</returns>
+        private async Task<GraphQLResponse<JsonObject>> SendRequestAsync(GraphQLRequest request, List<string> log)
         {
             int tries = 3;
 
@@ -142,7 +168,7 @@ namespace smashgg_to_liquipedia
                 }
                 catch (GraphQLHttpRequestException httpException)
                 {
-                    WriteLineToLog("Request failed with status " + httpException.StatusCode);
+                    log.Add("Request failed with status " + httpException.StatusCode);
                     response = new GraphQLResponse<JsonObject>();
                 }
 
@@ -151,7 +177,7 @@ namespace smashgg_to_liquipedia
                 {
                     foreach (var error in response.Errors)
                     {
-                        WriteLineToLog(error.Message + "/" + error.Locations);
+                        log.Add(error.Message + "/" + error.Locations);
                     }
                 }
 
@@ -162,7 +188,7 @@ namespace smashgg_to_liquipedia
                 }
                 else
                 {
-                    WriteLineToLog("No data. Retrying...");
+                    log.Add("No data. Retrying...");
                     await Task.Delay(5000);
                     tries--;
                 }
@@ -226,7 +252,7 @@ namespace smashgg_to_liquipedia
             };
 
             
-            GraphQLResponse<JsonObject> response = Task.Run(() => SendRequest(eventsRequest)).Result;
+            GraphQLResponse<JsonObject> response = SendRequest(eventsRequest);
             Tournament tournament = new Tournament();
 
             if (response != null && response.Data != null)
@@ -363,7 +389,7 @@ namespace smashgg_to_liquipedia
                 page = page
             };
 
-            GraphQLResponse<JsonObject> response = Task.Run(() => SendRequest(eventsRequest)).Result;
+            GraphQLResponse<JsonObject> response = SendRequest(eventsRequest);
             Tournament tournament = new Tournament();
 
             // Create a blank event list attached to the tournament
@@ -595,7 +621,7 @@ namespace smashgg_to_liquipedia
                         };
                     }
 
-                    GraphQLResponse<JsonObject> setsResponse = Task.Run(() => SendRequest(setsRequest)).Result;
+                    GraphQLResponse<JsonObject> setsResponse = SendRequest(setsRequest);
                     if (setsResponse != null)
                     {
                         // Parse the json response
@@ -706,7 +732,7 @@ namespace smashgg_to_liquipedia
                     }
                     
 
-                    GraphQLResponse<JsonObject> entrantsResponse = Task.Run(() => SendRequest(entrantsRequest)).Result;
+                    GraphQLResponse<JsonObject> entrantsResponse = SendRequest(entrantsRequest);
                     if (entrantsResponse != null)
                     {
                         // Parse the json response
@@ -790,7 +816,7 @@ namespace smashgg_to_liquipedia
                 }
             };
 
-            GraphQLResponse<JsonObject> response = Task.Run(() => SendRequest(standingsRequest)).Result;
+            GraphQLResponse<JsonObject> response = SendRequest(standingsRequest);
             Event eventResults = new Event();
             if (response != null)
             {
@@ -865,7 +891,7 @@ namespace smashgg_to_liquipedia
                 }
             };
 
-            GraphQLResponse<JsonObject> response = Task.Run(() => SendRequest(pgStandingsRequest)).Result;
+            GraphQLResponse<JsonObject> response = SendRequest(pgStandingsRequest);
             PhaseGroup phaseGroupResults = new PhaseGroup();
             if (response != null)
             {
