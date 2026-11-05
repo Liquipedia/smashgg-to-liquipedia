@@ -175,7 +175,4 @@ XCOPY "$(SolutionDir)smashgg-to-liquipedia\Stage Lists" "$(TargetDir)Stage Lists
     </Content>
     <Content Include="smashgg to liquipedia.ico" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Remove="smashgg.cs" />
-  </ItemGroup>
 </Project>
