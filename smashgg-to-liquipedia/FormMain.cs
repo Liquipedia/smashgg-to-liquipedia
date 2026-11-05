@@ -17,7 +17,7 @@ namespace smashgg_to_liquipedia
 {
     public partial class FormMain : Form, IFormMain
     {
-        static Version Version => System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+        static string Version => Application.ProductVersion;
 
         private static HttpClient httpClient;
 
