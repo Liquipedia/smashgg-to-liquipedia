@@ -23,7 +23,8 @@
     <BootstrapperEnabled>true</BootstrapperEnabled>
     <AssemblyTitle>smashgg api</AssemblyTitle>
     <Product>smashgg api</Product>
-    <Copyright>Copyright ©  2016</Copyright>
+    <Copyright>Copyright (c) 2016-2022 spazer; Copyright (c) 2026 Liquipedia</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Deterministic>false</Deterministic>
     <AssemblyVersion>4.3.*</AssemblyVersion>
     <OutputPath>bin\$(Configuration)\</OutputPath>
@@ -173,8 +174,5 @@ XCOPY "$(SolutionDir)smashgg-to-liquipedia\Stage Lists" "$(TargetDir)Stage Lists
       <SubType>Designer</SubType>
     </Content>
     <Content Include="smashgg to liquipedia.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Remove="smashgg.cs" />
   </ItemGroup>
 </Project>
