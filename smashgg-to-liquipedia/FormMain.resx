@@ -118,11 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="richTextBoxExLpFinalBracket.Text" xml:space="preserve">
-    <value>{{DEFinalSmwBracket
-|l1placement=4
-|r2placement=3
-|r3loserplacement=2
-|r3winnerplacement=1
+    <value>{{LegacyBracket|Bracket/2U2L1D|DEFinalSmwBracket|type=solo|id=
 
 &lt;!-- FROM WINNERS --&gt;
 |r1m1p1= |r1m1p1flag= |r1m1p1score=

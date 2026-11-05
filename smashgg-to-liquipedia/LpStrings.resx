@@ -223,7 +223,7 @@
     <value>{{Match list end}}</value>
   </data>
   <data name="MatchListStart" xml:space="preserve">
-    <value>{{Match list start</value>
+    <value>{{LegacyMatchListStart|id=</value>
   </data>
   <data name="MatchStages" xml:space="preserve">
     <value>{{Match stages</value>
