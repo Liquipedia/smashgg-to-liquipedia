@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using smashgg_to_liquipedia.Smashgg.Schema;
 
@@ -50,8 +51,8 @@ namespace smashgg_to_liquipedia.Liquipedia
         {
             if (!loadedMatchDetailDictionary)
             {
-                LoadDictionaryFromCSV(ref gameCharacterList, selectedEvent.videogame.id, "Character");
-                LoadDictionaryFromCSV(ref gameStageList, selectedEvent.videogame.id, "Stage");
+                LoadDictionaryFromJson(ref gameCharacterList, selectedEvent.videogame.id, "Character");
+                LoadDictionaryFromJson(ref gameStageList, selectedEvent.videogame.id, "Stage");
 
                 loadedMatchDetailDictionary = true;
             }
@@ -184,50 +185,34 @@ namespace smashgg_to_liquipedia.Liquipedia
 
 
         /// <summary>
-        /// Loads a dictionary with values from a CSV file
+        /// Loads a dictionary with values from a JSON file mapping IDs to names
         /// </summary>
         /// <param name="targetDictionary">The dictionary to fill</param>
         /// <param name="gameId">ID of the game. Melee = 1, Wii U = 3, 64 = 4</param>
         /// <param name="datatype"></param>
-        private void LoadDictionaryFromCSV(ref Dictionary<int, string> targetDictionary, int gameId, string datatype)
+        private void LoadDictionaryFromJson(ref Dictionary<int, string> targetDictionary, int gameId, string datatype)
         {
             // Clear the list
             targetDictionary.Clear();
 
-            string filename = datatype + " Lists\\" + datatype + " List " + gameId + ".csv";
+            string filename = Path.Combine(datatype + " Lists", datatype + " List " + gameId + ".json");
 
-            // Read csv if available
+            if (!File.Exists(filename))
+            {
+                log += "Couldn't find JSON file: " + filename + "\r\n";
+                return;
+            }
+
             try
             {
-                using (StreamReader file = new StreamReader(filename, System.Text.Encoding.Default))
+                using (FileStream file = File.OpenRead(filename))
                 {
-                    while (!file.EndOfStream)
-                    {
-                        string input = file.ReadLine();
-                        string[] splitinput = input.Split(',');
-
-                        if (splitinput.Count() == 2)
-                        {
-                            int num;
-                            if (int.TryParse(splitinput[0], out num))
-                            {
-                                targetDictionary.Add(num, splitinput[1]);
-                            }
-                            else
-                            {
-                                log += "Invalid " + datatype + " number in: " + input + "\r\n";
-                            }
-                        }
-                        else
-                        {
-                            log += "Couldn't parse " + datatype + " entry: " + input + "\r\n";
-                        }
-                    }
+                    targetDictionary = JsonSerializer.Deserialize<Dictionary<int, string>>(file) ?? new Dictionary<int, string>();
                 }
             }
-            catch
+            catch (Exception ex) when (ex is JsonException || ex is IOException || ex is UnauthorizedAccessException)
             {
-                log += "Couldn't find CSV file: " + filename + "\r\n";
+                log += "Couldn't parse " + datatype + " JSON file " + filename + ": " + ex.Message + "\r\n";
             }
         }
 
