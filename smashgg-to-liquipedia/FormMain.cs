@@ -2100,6 +2100,24 @@ namespace smashgg_to_liquipedia
             apiQuery.SetToken(authToken);
         }
 
+        /// <summary>
+        /// Rereads BracketConversions.json so edits take effect without restarting
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void buttonReloadBracketConversions_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                BracketConversion.Instance.Reload();
+                richTextBoxLog.Text += "Reloaded bracket conversions\r\n";
+            }
+            catch (Exception ex) when (ex is System.Text.Json.JsonException || ex is IOException || ex is UnauthorizedAccessException)
+            {
+                richTextBoxLog.Text += "Failed to reload bracket conversions: " + ex.Message + "\r\n";
+            }
+        }
+
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (authToken != string.Empty)

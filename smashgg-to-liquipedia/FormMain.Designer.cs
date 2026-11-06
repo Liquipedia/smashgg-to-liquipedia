@@ -92,6 +92,7 @@
             this.numericUpDownWinnersStart = new System.Windows.Forms.NumericUpDown();
             this.checkBoxLockWinners = new System.Windows.Forms.CheckBox();
             this.buttonGetEvent = new System.Windows.Forms.Button();
+            this.buttonReloadBracketConversions = new System.Windows.Forms.Button();
             this.checkBoxSorting = new System.Windows.Forms.CheckBox();
             this.richTextBoxExLpWinnersBracket = new RichTextBoxEx();
             this.richTextBoxExLpFinalBracket = new RichTextBoxEx();
@@ -931,12 +932,24 @@
             this.label8.Size = new System.Drawing.Size(99, 16);
             this.label8.TabIndex = 37;
             this.label8.Text = "Event Page";
-            // 
+            //
+            // buttonReloadBracketConversions
+            //
+            this.buttonReloadBracketConversions.Location = new System.Drawing.Point(945, 440);
+            this.buttonReloadBracketConversions.Margin = new System.Windows.Forms.Padding(4);
+            this.buttonReloadBracketConversions.Name = "buttonReloadBracketConversions";
+            this.buttonReloadBracketConversions.Size = new System.Drawing.Size(306, 28);
+            this.buttonReloadBracketConversions.TabIndex = 38;
+            this.buttonReloadBracketConversions.Text = "Reload Bracket Conversions";
+            this.buttonReloadBracketConversions.UseVisualStyleBackColor = true;
+            this.buttonReloadBracketConversions.Click += new System.EventHandler(this.buttonReloadBracketConversions_Click);
+            //
             // FormMain
-            // 
+            //
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1264, 697);
+            this.Controls.Add(this.buttonReloadBracketConversions);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.numericUpDownEventPage);
             this.Controls.Add(this.panel3);
@@ -1071,6 +1084,7 @@
         private System.Windows.Forms.Button buttonCircuit;
         private System.Windows.Forms.NumericUpDown numericUpDownEventPage;
         private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.Button buttonReloadBracketConversions;
     }
 }
 

@@ -21,11 +21,20 @@ namespace smashgg_to_liquipedia
             @"\{\{(?<bracketName>[^\r\n]+)", RegexOptions.Compiled
         );
 
-        private readonly Dictionary<string, string> SinglesConversionData;
+        private Dictionary<string, string> SinglesConversionData;
 
-        private readonly Dictionary<string, string> DoublesConversionData;
+        private Dictionary<string, string> DoublesConversionData;
 
         private BracketConversion()
+        {
+            Reload();
+        }
+
+        /// <summary>
+        /// Rereads the conversion data from disk. If the file is malformed, the
+        /// exception propagates and the previously loaded conversions are kept.
+        /// </summary>
+        public void Reload()
         {
             Dictionary<string, Dictionary<string, string>> conversionData = null;
             try
