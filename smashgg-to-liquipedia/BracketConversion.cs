@@ -32,7 +32,13 @@ namespace smashgg_to_liquipedia
 
         private BracketConversion()
         {
-            Reload();
+            try
+            {
+                Reload();
+            }
+            catch (Exception ex) when (ex is FileNotFoundException || ex is JsonException)
+            {
+            }
         }
 
         /// <summary>
@@ -48,12 +54,11 @@ namespace smashgg_to_liquipedia
                     File.ReadAllText(DATA_FILENAME)
                 );
             }
-            catch (Exception ex) when (ex is FileNotFoundException || ex is JsonException)
+            finally
             {
+                SinglesConversionData = GetConversionsOrEmpty(conversionData, "singles");
+                DoublesConversionData = GetConversionsOrEmpty(conversionData, "doubles");
             }
-
-            SinglesConversionData = GetConversionsOrEmpty(conversionData, "singles");
-            DoublesConversionData = GetConversionsOrEmpty(conversionData, "doubles");
         }
 
         private static Dictionary<string, string> GetConversionsOrEmpty(
