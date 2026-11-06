@@ -43,7 +43,7 @@ namespace smashgg_to_liquipedia
                     File.ReadAllText(DATA_FILENAME)
                 );
             }
-            catch (FileNotFoundException)
+            catch (Exception ex) when (ex is FileNotFoundException || ex is JsonException)
             {
             }
 
