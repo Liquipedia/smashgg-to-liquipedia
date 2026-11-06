@@ -36,7 +36,7 @@ namespace smashgg_to_liquipedia
             {
                 Reload();
             }
-            catch (Exception ex) when (ex is FileNotFoundException || ex is JsonException)
+            catch (Exception ex) when (ex is IOException || ex is JsonException)
             {
             }
         }
