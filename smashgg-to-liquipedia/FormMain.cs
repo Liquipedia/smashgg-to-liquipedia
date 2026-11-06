@@ -546,7 +546,7 @@ namespace smashgg_to_liquipedia
             }
 
             richTextBoxLog.Text += lpout.Log;
-            richTextBoxLpOutput.Text = output.Trim();
+            richTextBoxLpOutput.Text = BracketConversion.Instance.ConvertLegacySinglesBrackets(output.Trim());
         }
 
         /// <summary>
@@ -620,7 +620,7 @@ namespace smashgg_to_liquipedia
                 output += "==Final Doubles Bracket==\r\n" + finalBracketOutput;
             }
 
-            richTextBoxLpOutput.Text = output;
+            richTextBoxLpOutput.Text = BracketConversion.Instance.ConvertLegacyDoublesBrackets(output);
             richTextBoxLog.Text += lpout.Log;
         }
 

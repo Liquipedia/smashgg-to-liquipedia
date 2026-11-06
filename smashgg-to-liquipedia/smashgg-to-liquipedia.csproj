@@ -150,6 +150,9 @@ XCOPY "$(SolutionDir)smashgg-to-liquipedia\Stage Lists" "$(TargetDir)Stage Lists
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <None Include="BracketConversions.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="Flag List.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
