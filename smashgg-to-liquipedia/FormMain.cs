@@ -2886,7 +2886,7 @@ namespace smashgg_to_liquipedia
             }
             else if (radioButtonDEFinal.Checked) 
             {
-                richTextBoxExLpFinalBracket.Text = @"{{LegacyBracket|Bracket/2U2L1D|DEFinalSmwBracket|type=solo|id=" + BracketConversion.GenerateBracketId() + @"
+                richTextBoxExLpFinalBracket.Text = "{{LegacyBracket|Bracket/2U2L1D|DEFinalSmwBracket|type=solo|id=" + BracketConversion.GenerateBracketId() + @"
 
 <!-- FROM WINNERS -->
 |r1m1p1= |r1m1p1flag= |r1m1p1score=
