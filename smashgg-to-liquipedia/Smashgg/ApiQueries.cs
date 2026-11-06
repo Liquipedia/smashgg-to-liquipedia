@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.RateLimiting;
 using GraphQL;
@@ -119,38 +120,12 @@ namespace smashgg_to_liquipedia
         }
 
         /// <summary>
-        /// Sends an API request to smash.gg
-        /// Variables should be attached to the request beforehand
-        /// </summary>
-        /// <param name="request">GraphQL request</param>
-        /// <returns>JSON data</returns>
-        private GraphQLResponse<JsonObject> SendRequest(GraphQLRequest request)
-        {
-            // Run off the UI thread to avoid deadlocking on the caller's synchronization context.
-            // Log lines are buffered and written here, on the calling thread, because the form's
-            // log control must only be touched from the UI thread (which is blocked until the
-            // request completes, so Control.Invoke would deadlock).
-            List<string> log = new List<string>();
-            try
-            {
-                return Task.Run(() => SendRequestAsync(request, log)).Result;
-            }
-            finally
-            {
-                foreach (string line in log)
-                {
-                    WriteLineToLog(line);
-                }
-            }
-        }
-
-        /// <summary>
         /// Sends an API request to smash.gg asynchronously
         /// </summary>
         /// <param name="request">GraphQL request</param>
-        /// <param name="log">Buffer for log lines; must not be written to the form from this method</param>
+        /// <param name="cancellationToken">Cancels the request</param>
         /// <returns>JSON data</returns>
-        private async Task<GraphQLResponse<JsonObject>> SendRequestAsync(GraphQLRequest request, List<string> log)
+        private async Task<GraphQLResponse<JsonObject>> SendRequestAsync(GraphQLRequest request, CancellationToken cancellationToken)
         {
             int tries = 3;
 
@@ -160,14 +135,14 @@ namespace smashgg_to_liquipedia
             while (tries > 0)
             {
                 // Consume a token and send the api query
-                await rateLimiter.AcquireAsync(1);
+                await rateLimiter.AcquireAsync(1, cancellationToken);
                 try
                 {
-                    response = await graphQLClient.SendQueryAsync<JsonObject>(request);
+                    response = await graphQLClient.SendQueryAsync<JsonObject>(request, cancellationToken);
                 }
                 catch (GraphQLHttpRequestException httpException)
                 {
-                    log.Add("Request failed with status " + httpException.StatusCode);
+                    WriteLineToLog("Request failed with status " + httpException.StatusCode);
                     response = new GraphQLResponse<JsonObject>();
                 }
 
@@ -176,7 +151,7 @@ namespace smashgg_to_liquipedia
                 {
                     foreach (var error in response.Errors)
                     {
-                        log.Add(error.Message + "/" + error.Locations);
+                        WriteLineToLog(error.Message + "/" + error.Locations);
                     }
                 }
 
@@ -187,8 +162,8 @@ namespace smashgg_to_liquipedia
                 }
                 else
                 {
-                    log.Add("No data. Retrying...");
-                    await Task.Delay(5000);
+                    WriteLineToLog("No data. Retrying...");
+                    await Task.Delay(5000, cancellationToken);
                     tries--;
                 }
             }
@@ -202,7 +177,7 @@ namespace smashgg_to_liquipedia
         /// <param name="tournamentSlug">Tournament slug</param>
         /// <param name="errors">Errors</param>
         /// <returns>Tournament object with all events</returns>
-        public Tournament GetEvents(string tournamentSlug)
+        public async Task<Tournament> GetEventsAsync(string tournamentSlug, CancellationToken cancellationToken)
         {
             GraphQLRequest eventsRequest = new GraphQLRequest
             {
@@ -251,7 +226,7 @@ namespace smashgg_to_liquipedia
             };
 
             
-            GraphQLResponse<JsonObject> response = SendRequest(eventsRequest);
+            GraphQLResponse<JsonObject> response = await SendRequestAsync(eventsRequest, cancellationToken);
             Tournament tournament = new Tournament();
 
             if (response != null && response.Data != null)
@@ -336,7 +311,7 @@ namespace smashgg_to_liquipedia
         /// <param name="tournamentSlug">Tournament slug</param>
         /// <param name="errors">Errors</param>
         /// <returns>Tournament object with all events</returns>
-        public Tournament GetSingleEvent(string tournamentSlug, string eventSlug, int page)
+        public async Task<Tournament> GetSingleEventAsync(string tournamentSlug, string eventSlug, int page, CancellationToken cancellationToken)
         {
             GraphQLRequest eventsRequest = new GraphQLRequest
             {
@@ -388,7 +363,7 @@ namespace smashgg_to_liquipedia
                 page = page
             };
 
-            GraphQLResponse<JsonObject> response = SendRequest(eventsRequest);
+            GraphQLResponse<JsonObject> response = await SendRequestAsync(eventsRequest, cancellationToken);
             Tournament tournament = new Tournament();
 
             // Create a blank event list attached to the tournament
@@ -476,9 +451,13 @@ namespace smashgg_to_liquipedia
             return tournament;
         }
 
-        public bool GetSets(int phaseGroupId, out List<Set> setList, bool includeDetails, bool noSorting)
+        /// <summary>
+        /// Gets all sets in a phasegroup
+        /// </summary>
+        /// <returns>The set list, or null if the data could not be retrieved</returns>
+        public async Task<List<Set>> GetSetsAsync(int phaseGroupId, bool includeDetails, bool noSorting, CancellationToken cancellationToken)
         {
-            setList = new List<Set>();
+            List<Set> setList = new List<Set>();
 
             int page = 1;
             string setsWithoutDetails = @"
@@ -620,7 +599,7 @@ namespace smashgg_to_liquipedia
                         };
                     }
 
-                    GraphQLResponse<JsonObject> setsResponse = SendRequest(setsRequest);
+                    GraphQLResponse<JsonObject> setsResponse = await SendRequestAsync(setsRequest, cancellationToken);
                     if (setsResponse != null)
                     {
                         // Parse the json response
@@ -634,24 +613,24 @@ namespace smashgg_to_liquipedia
                     else
                     {
                         WriteLineToLog("Could not retrieve any data");
-                        return false;
+                        return null;
                     }
                 } while (page <= tempPhaseGroup.sets.pageInfo.totalPages);
             }
-            catch (Exception error)
+            catch (Exception error) when (!(error is OperationCanceledException))
             {
                 WriteLineToLog(error.Message);
             }
 
-            return true;
+            return setList;
         }
 
         /// <summary>
         /// Gets entrants
         /// </summary>
         /// <param name="eventId">ID of the event to query</param>
-        /// <param name="entrants">Entrants object for the event</param>
-        public void GetEventEntrants(int eventId, int playersPerEntrant, out Dictionary<int,Entrant> entrants)
+        /// <returns>Entrants for the event, keyed by entrant ID</returns>
+        public async Task<Dictionary<int, Entrant>> GetEventEntrantsAsync(int eventId, int playersPerEntrant, CancellationToken cancellationToken)
         {
             // Will contain the full entrants list
             List<Entrant> entrantList = new List<Entrant>();
@@ -731,7 +710,7 @@ namespace smashgg_to_liquipedia
                     }
                     
 
-                    GraphQLResponse<JsonObject> entrantsResponse = SendRequest(entrantsRequest);
+                    GraphQLResponse<JsonObject> entrantsResponse = await SendRequestAsync(entrantsRequest, cancellationToken);
                     if (entrantsResponse != null)
                     {
                         // Parse the json response
@@ -745,8 +724,7 @@ namespace smashgg_to_liquipedia
                     else
                     {
                         WriteLineToLog("Could not retrieve any entrant data");
-                        entrants = new Dictionary<int, Entrant>();
-                        return;
+                        return new Dictionary<int, Entrant>();
                     }
                 } while (page <= tempEvent.entrants.pageInfo.totalPages);
 
@@ -766,10 +744,10 @@ namespace smashgg_to_liquipedia
             }
 
             // Reformat list into dictionary
-            entrants = entrantList.ToDictionary(x => x.id, x => x);
+            return entrantList.ToDictionary(x => x.id, x => x);
         }
 
-        public List<Standing> GetStandings(int eventId, int lastPlacement)
+        public async Task<List<Standing>> GetStandingsAsync(int eventId, int lastPlacement, CancellationToken cancellationToken)
         {
             GraphQLRequest standingsRequest = new GraphQLRequest
             {
@@ -815,7 +793,7 @@ namespace smashgg_to_liquipedia
                 }
             };
 
-            GraphQLResponse<JsonObject> response = SendRequest(standingsRequest);
+            GraphQLResponse<JsonObject> response = await SendRequestAsync(standingsRequest, cancellationToken);
             Event eventResults = new Event();
             if (response != null)
             {
@@ -836,7 +814,7 @@ namespace smashgg_to_liquipedia
             return eventResults.standings.nodes;
         }
 
-        public List<Seed> GetSeedStandings(int phaseGroupId)
+        public async Task<List<Seed>> GetSeedStandingsAsync(int phaseGroupId, CancellationToken cancellationToken)
         {
             GraphQLRequest pgStandingsRequest = new GraphQLRequest
             {
@@ -890,7 +868,7 @@ namespace smashgg_to_liquipedia
                 }
             };
 
-            GraphQLResponse<JsonObject> response = SendRequest(pgStandingsRequest);
+            GraphQLResponse<JsonObject> response = await SendRequestAsync(pgStandingsRequest, cancellationToken);
             PhaseGroup phaseGroupResults = new PhaseGroup();
             if (response != null)
             {
