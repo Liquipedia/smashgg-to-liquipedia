@@ -21,6 +21,11 @@ namespace smashgg_to_liquipedia
             @"\{\{(?<bracketName>[^\r\n]+)", RegexOptions.Compiled
         );
 
+        // `|id=` with nothing after it but optional spaces before the next parameter, `}}` or line end
+        private static readonly Regex EmptyIdRegex = new Regex(
+            @"\|id=(?=[ \t]*(?:[\r\n|}]|$))", RegexOptions.Compiled
+        );
+
         private Dictionary<string, string> SinglesConversionData;
 
         private Dictionary<string, string> DoublesConversionData;
@@ -77,7 +82,7 @@ namespace smashgg_to_liquipedia
             return doublesWikiCode;
         }
 
-        public static string GenerateBracketId()
+        private static string GenerateBracketId()
         {
             var chars = new char[10];
             for (int i = 0; i < 10; i++)
@@ -103,11 +108,13 @@ namespace smashgg_to_liquipedia
 
                 if (data.TryGetValue(match1BracketName, out string match2BracketType))
                 {
-                    return "{{LegacyBracket|" + match2BracketType + "|" + match1BracketName + "|type=" + bracketType + "|id=" + GenerateBracketId();
+                    return "{{LegacyBracket|" + match2BracketType + "|" + match1BracketName + "|type=" + bracketType + "|id=";
                 }
 
                 return match.Value;
             });
+
+            wikiCode = EmptyIdRegex.Replace(wikiCode, match => match.Value + GenerateBracketId());
         }
     }
 }
