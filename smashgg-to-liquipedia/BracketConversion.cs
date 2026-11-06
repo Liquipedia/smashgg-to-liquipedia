@@ -77,7 +77,7 @@ namespace smashgg_to_liquipedia
             return doublesWikiCode;
         }
 
-        private static string GenerateBracketId()
+        public static string GenerateBracketId()
         {
             var chars = new char[10];
             for (int i = 0; i < 10; i++)
