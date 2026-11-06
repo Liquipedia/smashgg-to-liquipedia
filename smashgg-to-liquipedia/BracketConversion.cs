@@ -21,31 +21,39 @@ namespace smashgg_to_liquipedia
             @"\{\{(?<bracketName>[^\r\n]+)", RegexOptions.Compiled
         );
 
-        private JsonDocument ConversionData;
+        private readonly Dictionary<string, string> SinglesConversionData;
 
-        private JsonElement SinglesConversionData => ConversionData.RootElement.GetProperty("singles");
-
-        private JsonElement DoublesConversionData => ConversionData.RootElement.GetProperty("doubles");
+        private readonly Dictionary<string, string> DoublesConversionData;
 
         private BracketConversion()
         {
+            Dictionary<string, Dictionary<string, string>> conversionData = null;
             try
             {
-                using (FileStream file = File.OpenRead(DATA_FILENAME))
-                {
-                    ConversionData = JsonDocument.Parse(file);
-                }
+                conversionData = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(
+                    File.ReadAllText(DATA_FILENAME)
+                );
             }
             catch (FileNotFoundException)
             {
-                ConversionData = JsonSerializer.SerializeToDocument(
-                    new
-                    {
-                        singles = new {},
-                        doubles = new {}
-                    }
-                );
             }
+
+            SinglesConversionData = GetConversionsOrEmpty(conversionData, "singles");
+            DoublesConversionData = GetConversionsOrEmpty(conversionData, "doubles");
+        }
+
+        private static Dictionary<string, string> GetConversionsOrEmpty(
+            Dictionary<string, Dictionary<string, string>> conversionData,
+            string key
+        )
+        {
+            if (conversionData != null
+                && conversionData.TryGetValue(key, out Dictionary<string, string> conversions)
+                && conversions != null)
+            {
+                return conversions;
+            }
+            return new Dictionary<string, string>();
         }
 
         public string ConvertLegacySinglesBrackets(string singlesWikiCode)
@@ -77,16 +85,16 @@ namespace smashgg_to_liquipedia
             return GenerateBracketId();
         }
 
-        private void ConvertLegacyBrackets(string bracketType, JsonElement data, ref string wikiCode)
+        private void ConvertLegacyBrackets(string bracketType, Dictionary<string, string> data, ref string wikiCode)
         {
             wikiCode = BracketNameRegex.Replace(wikiCode, match =>
             {
                 Group nameGroup = match.Groups["bracketName"];
                 string match1BracketName = nameGroup.Value.TrimEnd();
 
-                if (data.TryGetProperty(match1BracketName, out JsonElement match2BracketType))
+                if (data.TryGetValue(match1BracketName, out string match2BracketType))
                 {
-                    return "{{LegacyBracket|" + match2BracketType.GetString() + "|" + match1BracketName + "|type=" + bracketType + "|id=" + GenerateBracketId();
+                    return "{{LegacyBracket|" + match2BracketType + "|" + match1BracketName + "|type=" + bracketType + "|id=" + GenerateBracketId();
                 }
 
                 return match.Value;
