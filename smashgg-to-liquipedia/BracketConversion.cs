@@ -36,7 +36,7 @@ namespace smashgg_to_liquipedia
                     ConversionData = JsonDocument.Parse(file);
                 }
             }
-            catch
+            catch (FileNotFoundException)
             {
                 ConversionData = JsonSerializer.SerializeToDocument(
                     new
