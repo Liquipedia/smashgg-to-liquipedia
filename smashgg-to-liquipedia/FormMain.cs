@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Net;
@@ -40,6 +41,11 @@ namespace smashgg_to_liquipedia
 
         string authToken = string.Empty;
 
+        /// <summary>
+        /// Cancelled when the form closes, to stop any in-flight requests
+        /// </summary>
+        private readonly CancellationTokenSource closingCts = new CancellationTokenSource();
+
         public string Log
         {
             get { return richTextBoxLog.Text; }
@@ -75,15 +81,8 @@ namespace smashgg_to_liquipedia
             richTextBoxExLpWinnersBracket.Cue = FormStrings.CuetextLpWinners;
             richTextBoxExLpLosersBracket.Cue = FormStrings.CuetextLpLosers;
 
-            if (radioButtonSmash.Checked == true)
-            {
-                playerdb = new PlayerDatabase(PlayerDatabase.DbSource.Smash, this);
-            }
-            else if (radioButtonFighters.Checked == true)
-            {
-                playerdb = new PlayerDatabase(PlayerDatabase.DbSource.Fighters, this);
-            }
-            UpdateRevID();
+            // Created empty; loaded from file in OnLoad
+            playerdb = new PlayerDatabase(this);
 
             bool success;
             apiQuery = new ApiQueries(authToken, playerdb, this, out success);
@@ -97,16 +96,75 @@ namespace smashgg_to_liquipedia
             }
         }
 
+        protected override async void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+
+            await RunLockedAsync(LoadSelectedDatabaseAsync);
+        }
+
         #region Buttons
+        /// <summary>
+        /// Runs a long-running operation with the form's controls locked, without blocking the UI thread
+        /// </summary>
+        /// <param name="operation">Operation to run</param>
+        private async Task RunLockedAsync(Func<CancellationToken, Task> operation)
+        {
+            LockControls();
+            try
+            {
+                await operation(closingCts.Token);
+            }
+            catch (OperationCanceledException) when (closingCts.IsCancellationRequested)
+            {
+                // Form is closing; nothing left to do
+            }
+            finally
+            {
+                if (!closingCts.IsCancellationRequested)
+                {
+                    UnlockControls();
+                }
+            }
+        }
+
+        private async void buttonGetTournament_Click(object sender, EventArgs e)
+        {
+            await RunLockedAsync(GetTournamentAsync);
+        }
+
+        private async void buttonGetEvent_Click(object sender, EventArgs e)
+        {
+            await RunLockedAsync(GetEventAsync);
+        }
+
+        private async void buttonGetData_Click(object sender, EventArgs e)
+        {
+            await RunLockedAsync(GetDataAsync);
+        }
+
+        private async void buttonPrizePool_Click(object sender, EventArgs e)
+        {
+            await RunLockedAsync(PrizePoolAsync);
+        }
+
+        private async void buttonCircuit_Click(object sender, EventArgs e)
+        {
+            await RunLockedAsync(CircuitAsync);
+        }
+
+        private async void buttonAKA_Click(object sender, EventArgs e)
+        {
+            await RunLockedAsync(AkaAsync);
+        }
+
         /// <summary>
         /// Indicates that user wishes to retrieve a bracket
         /// </summary>
         /// <param name="sender">N/A</param>
         /// <param name="e">N/A</param>
-        private void buttonGetTournament_Click(object sender, EventArgs e)
+        private async Task GetTournamentAsync(CancellationToken cancellationToken)
         {
-            LockControls();
-
             tabControl.SelectedTab = tabPageTournamentExplorer;
 
             // Find tournament slug
@@ -116,7 +174,6 @@ namespace smashgg_to_liquipedia
             if (tournamentMarker == -1)
             {
                 richTextBoxLog.Text += "Invalid URL\r\n";
-                UnlockControls();
                 return;
             }
             string slug;
@@ -133,11 +190,10 @@ namespace smashgg_to_liquipedia
             // Clear the treeview
             treeView1.Nodes.Clear();
 
-            tournament = apiQuery.GetEvents(slug);
+            tournament = await apiQuery.GetEventsAsync(slug, cancellationToken);
             if (tournament.events == null)
             {
                 richTextBoxLog.Text += "Failed to get tournament\r\n";
-                UnlockControls();
                 return;
             }
 
@@ -374,8 +430,6 @@ namespace smashgg_to_liquipedia
             // Expand the tournament node
             root.Expand();
             treeView1.EndUpdate();
-
-            UnlockControls();
 
             richTextBoxLog.Text += "Get tournament complete.\r\n";
         }
@@ -629,7 +683,7 @@ namespace smashgg_to_liquipedia
         /// </summary>
         /// <param name="sender">N/A</param>
         /// <param name="e">N/A</param>
-        private void buttonPrizePool_Click(object sender, EventArgs e)
+        private async Task PrizePoolAsync(CancellationToken cancellationToken)
         {
             if (selectedEvent == null)
             {
@@ -637,7 +691,7 @@ namespace smashgg_to_liquipedia
                 return;
             }
 
-            List<Standing> standingList = apiQuery.GetStandings(selectedEvent.id, (int)numericUpDownPrizePool.Value);
+            List<Standing> standingList = await apiQuery.GetStandingsAsync(selectedEvent.id, (int)numericUpDownPrizePool.Value, cancellationToken);
 
 
             richTextBoxLog.Text += "Outputting results\r\n";
@@ -714,7 +768,7 @@ namespace smashgg_to_liquipedia
             richTextBoxLog.Text += "Done.\r\n";
         }
 
-        private void buttonCircuit_Click(object sender, EventArgs e)
+        private async Task CircuitAsync(CancellationToken cancellationToken)
         {
             if (selectedEvent == null)
             {
@@ -722,7 +776,7 @@ namespace smashgg_to_liquipedia
                 return;
             }
 
-            List<Standing> standingList = apiQuery.GetStandings(selectedEvent.id, (int)numericUpDownPrizePool.Value);
+            List<Standing> standingList = await apiQuery.GetStandingsAsync(selectedEvent.id, (int)numericUpDownPrizePool.Value, cancellationToken);
 
 
             richTextBoxLog.Text += "Outputting results\r\n";
@@ -832,7 +886,7 @@ namespace smashgg_to_liquipedia
             UnlockControls();
         }
 
-        private static async Task<string> GetAkaFromWiki(PlayerDatabase.DbSource source)
+        private static async Task<string> GetAkaFromWiki(PlayerDatabase.DbSource source, CancellationToken cancellationToken)
         {
             if (httpClient == null)
             {
@@ -849,9 +903,13 @@ namespace smashgg_to_liquipedia
                 httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("(https://github.com/Liquipedia/smashgg-to-liquipedia)"));
             }
 
-            return await httpClient.GetStringAsync(
-                $"{source.ToString().ToLower()}/api.php?action=parse&page=Liquipedia:Players_Regex&prop=revid|wikitext&format=json"
-            );
+            using (HttpResponseMessage response = await httpClient.GetAsync(
+                $"{source.ToString().ToLower()}/api.php?action=parse&page=Liquipedia:Players_Regex&prop=revid|wikitext&format=json",
+                cancellationToken))
+            {
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadAsStringAsync();
+            }
         }
 
         /// <summary>
@@ -859,17 +917,17 @@ namespace smashgg_to_liquipedia
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void buttonAKA_Click(object sender, EventArgs e)
+        private async Task AkaAsync(CancellationToken cancellationToken)
         {
             // Decide on the URL to use
             string json = string.Empty;
             if (radioButtonSmash.Checked)
             {
-                json = Task.Run(() => GetAkaFromWiki(PlayerDatabase.DbSource.Smash)).Result;
+                json = await GetAkaFromWiki(PlayerDatabase.DbSource.Smash, cancellationToken);
             }
             else if (radioButtonFighters.Checked)
             {
-                json = Task.Run(() => GetAkaFromWiki(PlayerDatabase.DbSource.Fighters)).Result;
+                json = await GetAkaFromWiki(PlayerDatabase.DbSource.Fighters, cancellationToken);
             }
             else
             {
@@ -879,24 +937,24 @@ namespace smashgg_to_liquipedia
             // Save the json to file, then read the file
             if (radioButtonSmash.Checked)
             {
-                if (!playerdb.SaveDatabase(json, PlayerDatabase.DbSource.Smash))
+                if (!await playerdb.SaveDatabaseAsync(json, PlayerDatabase.DbSource.Smash))
                 {
                     richTextBoxLog.Text = "Could not save Smash Database";
                 }
 
-                if (!playerdb.ReadDatabaseFromFile(PlayerDatabase.DbSource.Smash))
+                if (!await playerdb.ReadDatabaseFromFileAsync(PlayerDatabase.DbSource.Smash, cancellationToken))
                 {
                     richTextBoxLog.Text = "Could not retrieve Smash Database";
                 }
             }
             else if (radioButtonFighters.Checked)
             {
-                if (!playerdb.SaveDatabase(json, PlayerDatabase.DbSource.Fighters))
+                if (!await playerdb.SaveDatabaseAsync(json, PlayerDatabase.DbSource.Fighters))
                 {
                     richTextBoxLog.Text = "Could not save Fighters Database";
                 }
 
-                if (!playerdb.ReadDatabaseFromFile(PlayerDatabase.DbSource.Fighters))
+                if (!await playerdb.ReadDatabaseFromFileAsync(PlayerDatabase.DbSource.Fighters, cancellationToken))
                 {
                     richTextBoxLog.Text = "Could not retrieve Fighters Database";
                 }
@@ -1944,6 +2002,21 @@ namespace smashgg_to_liquipedia
             buttonWinnerShift.Enabled = false;
             buttonLoserShift.Enabled = false;
             buttonGroupTable.Enabled = false;
+            buttonGetEvent.Enabled = false;
+            buttonGetData.Enabled = false;
+            buttonCircuit.Enabled = false;
+            buttonAKA.Enabled = false;
+            buttonAkaList.Enabled = false;
+            buttonAuthentication.Enabled = false;
+            buttonReloadBracketConversions.Enabled = false;
+            treeView1.Enabled = false;
+            radioButtonSmash.Enabled = false;
+            radioButtonFighters.Enabled = false;
+            radioButtonRocketLeague.Enabled = false;
+            radioButtonBracket.Enabled = false;
+            radioButtonRR.Enabled = false;
+            checkBoxSorting.Enabled = false;
+            numericUpDownEventPage.Enabled = false;
 
             checkBoxFillByes.Enabled = false;
             checkBoxGuessFinal.Enabled = false;
@@ -1992,6 +2065,21 @@ namespace smashgg_to_liquipedia
             buttonWinnerShift.Enabled = true;
             buttonLoserShift.Enabled = true;
             buttonGroupTable.Enabled = true;
+            buttonGetEvent.Enabled = true;
+            buttonGetData.Enabled = true;
+            buttonCircuit.Enabled = true;
+            buttonAKA.Enabled = true;
+            buttonAkaList.Enabled = true;
+            buttonAuthentication.Enabled = true;
+            buttonReloadBracketConversions.Enabled = true;
+            treeView1.Enabled = true;
+            radioButtonSmash.Enabled = true;
+            radioButtonFighters.Enabled = true;
+            radioButtonRocketLeague.Enabled = true;
+            radioButtonBracket.Enabled = true;
+            radioButtonRR.Enabled = true;
+            checkBoxSorting.Enabled = true;
+            numericUpDownEventPage.Enabled = true;
 
             checkBoxFillByes.Enabled = true;
             checkBoxGuessFinal.Enabled = true;
@@ -2056,18 +2144,29 @@ namespace smashgg_to_liquipedia
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void radioButtonDatabase_CheckedChanged(object sender, EventArgs e)
+        private async void radioButtonDatabase_CheckedChanged(object sender, EventArgs e)
+        {
+            // CheckedChanged also fires for the radio button being unchecked; only load once
+            if (!((RadioButton)sender).Checked) return;
+
+            await RunLockedAsync(LoadSelectedDatabaseAsync);
+        }
+
+        /// <summary>
+        /// Loads the AKA database matching the selected radio button
+        /// </summary>
+        private async Task LoadSelectedDatabaseAsync(CancellationToken cancellationToken)
         {
             if (radioButtonSmash.Checked)
             {
-                if (!playerdb.ReadDatabaseFromFile(PlayerDatabase.DbSource.Smash))
+                if (!await playerdb.ReadDatabaseFromFileAsync(PlayerDatabase.DbSource.Smash, cancellationToken))
                 {
                     richTextBoxLog.Text = "Could not retrieve Smash Database\r\n";
                 }
             }
             else if (radioButtonFighters.Checked)
             {
-                if (!playerdb.ReadDatabaseFromFile(PlayerDatabase.DbSource.Fighters))
+                if (!await playerdb.ReadDatabaseFromFileAsync(PlayerDatabase.DbSource.Fighters, cancellationToken))
                 {
                     richTextBoxLog.Text = "Could not retrieve Fighters Database\r\n";
                 }
@@ -2120,6 +2219,8 @@ namespace smashgg_to_liquipedia
 
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
         {
+            closingCts.Cancel();
+
             if (authToken != string.Empty)
             {
                 try
@@ -2272,7 +2373,7 @@ namespace smashgg_to_liquipedia
         }
         #endregion
 
-        private void buttonGetData_Click(object sender, EventArgs e)
+        private async Task GetDataAsync(CancellationToken cancellationToken)
         {
             // Clear data
             ClearData();
@@ -2296,14 +2397,14 @@ namespace smashgg_to_liquipedia
                 // Get entrants in the event
                 if (selectedEvent.teamRosterSize == null)
                 {
-                    apiQuery.GetEventEntrants(selectedEvent.id, 1, out entrantList);
+                    entrantList = await apiQuery.GetEventEntrantsAsync(selectedEvent.id, 1, cancellationToken);
                 }
                 else
                 {
-                    apiQuery.GetEventEntrants(selectedEvent.id, selectedEvent.teamRosterSize.maxPlayers, out entrantList);
+                    entrantList = await apiQuery.GetEventEntrantsAsync(selectedEvent.id, selectedEvent.teamRosterSize.maxPlayers, cancellationToken);
                 }
             }
-            catch (Exception error)
+            catch (Exception error) when (!(error is OperationCanceledException))
             {
                 richTextBoxLpOutput.Text = "Failed to get event entrants\r\n";
                 richTextBoxLpOutput.Text += error.Message;
@@ -2321,7 +2422,8 @@ namespace smashgg_to_liquipedia
                         if (selectedPhase.phasegroups.nodes.Count == 1)
                         {
                             richTextBoxLog.Text += string.Format("Single phasegroup phase detected\r\n");
-                            if (!(apiQuery.GetSets(selectedObjectId, out setList, checkBoxMatchDetails.Checked, checkBoxSorting.Checked)))
+                            setList = await apiQuery.GetSetsAsync(selectedObjectId, checkBoxMatchDetails.Checked, checkBoxSorting.Checked, cancellationToken);
+                            if (setList == null)
                             {
                                 richTextBoxLog.Text += string.Format("Get failed\r\n");
                                 return;
@@ -2333,7 +2435,7 @@ namespace smashgg_to_liquipedia
                             }
 
                             // Get standings
-                            seedList = apiQuery.GetSeedStandings(selectedObjectId);
+                            seedList = await apiQuery.GetSeedStandingsAsync(selectedObjectId, cancellationToken);
 
                             // Generate the round list
                             ProcessBracket(selectedEvent.Type);
@@ -2377,7 +2479,7 @@ namespace smashgg_to_liquipedia
                             Dictionary<int, PoolRecord> poolData = new Dictionary<int, PoolRecord>();
 
                             // Get all sets in the phasegroup
-                            apiQuery.GetSets(group.id, out setList, checkBoxMatchDetails.Checked, checkBoxSorting.Checked);
+                            setList = await apiQuery.GetSetsAsync(group.id, checkBoxMatchDetails.Checked, checkBoxSorting.Checked, cancellationToken);
                             if (setList == null)
                             {
                                 richTextBoxLog.Text += string.Format("Set list not retrieved for {0}\r\n", group.id);
@@ -2385,7 +2487,7 @@ namespace smashgg_to_liquipedia
                             }
 
                             // Get standings
-                            seedList = apiQuery.GetSeedStandings(group.id);
+                            seedList = await apiQuery.GetSeedStandingsAsync(group.id, cancellationToken);
 
                             // Generate the round list
                             ProcessBracket(selectedEvent.Type);
@@ -2408,7 +2510,8 @@ namespace smashgg_to_liquipedia
 
                     // Get a single phasegroup
                     case TreeNodeData.NodeType.PhaseGroup:
-                        if (!(apiQuery.GetSets(selectedObjectId, out setList, checkBoxMatchDetails.Checked, checkBoxSorting.Checked)))
+                        setList = await apiQuery.GetSetsAsync(selectedObjectId, checkBoxMatchDetails.Checked, checkBoxSorting.Checked, cancellationToken);
+                        if (setList == null)
                         {
                             richTextBoxLog.Text += string.Format("Get failed\r\n");
                             return;
@@ -2420,7 +2523,7 @@ namespace smashgg_to_liquipedia
                         }
 
                         // Get standings
-                        seedList = apiQuery.GetSeedStandings(selectedObjectId);
+                        seedList = await apiQuery.GetSeedStandingsAsync(selectedObjectId, cancellationToken);
 
                         // Generate the round list
                         ProcessBracket(selectedEvent.Type);
@@ -2467,7 +2570,7 @@ namespace smashgg_to_liquipedia
                             Dictionary<int, PoolRecord> poolData = new Dictionary<int, PoolRecord>();
 
                             // Get all sets in the phasegroup
-                            apiQuery.GetSets(group.id, out setList, checkBoxMatchDetails.Checked, checkBoxSorting.Checked);
+                            setList = await apiQuery.GetSetsAsync(group.id, checkBoxMatchDetails.Checked, checkBoxSorting.Checked, cancellationToken);
                             if (setList == null || setList.Count == 0)
                             {
                                 richTextBoxLog.Text += string.Format("Set list not retrieved for {0}\r\n", group.id);
@@ -2475,7 +2578,7 @@ namespace smashgg_to_liquipedia
                             }
                             
                             // Get standings
-                            seedList = apiQuery.GetSeedStandings(group.id);
+                            seedList = await apiQuery.GetSeedStandingsAsync(group.id, cancellationToken);
                             if (seedList == null || seedList.Count == 0)
                             {
                                 richTextBoxLog.Text += string.Format("Seed list not retrieved for {0}\r\n", group.id);
@@ -2508,14 +2611,14 @@ namespace smashgg_to_liquipedia
                         break;
                 }
             }
-            catch (Exception error)
+            catch (Exception error) when (!(error is OperationCanceledException))
             {
                 richTextBoxLpOutput.Text = "Failed to get data\r\n";
                 richTextBoxLpOutput.Text += error.Message;
                 richTextBoxLpOutput.Text += error.StackTrace;
             }
 
-    richTextBoxLog.Text += string.Format("Get data complete.\r\n");
+            richTextBoxLog.Text += string.Format("Get data complete.\r\n");
         }
 
         /// <summary>
@@ -2523,10 +2626,8 @@ namespace smashgg_to_liquipedia
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void buttonGetEvent_Click(object sender, EventArgs e)
+        private async Task GetEventAsync(CancellationToken cancellationToken)
         {
-            LockControls();
-
             tabControl.SelectedTab = tabPageTournamentExplorer;
 
             // Find tournament slug
@@ -2536,7 +2637,6 @@ namespace smashgg_to_liquipedia
             if (tournamentMarker == -1)
             {
                 richTextBoxLog.Text += "Invalid URL\r\n";
-                UnlockControls();
                 return;
             }
             int endtournamentMarker = textBoxTournamentUrl.Text.IndexOf("/", tournamentMarker + 11);
@@ -2552,7 +2652,6 @@ namespace smashgg_to_liquipedia
             if (eventMarker == -1)
             {
                 richTextBoxLog.Text += "Invalid URL - no event found\r\n";
-                UnlockControls();
                 return;
             }
             int endEventMarker = textBoxTournamentUrl.Text.IndexOf("/", eventMarker + 7);
@@ -2564,11 +2663,10 @@ namespace smashgg_to_liquipedia
 
             // Clear the treeview
             treeView1.Nodes.Clear();
-            tournament = apiQuery.GetSingleEvent(tournamentSlug, "tournament/" + eventSlug, (int)numericUpDownEventPage.Value);
+            tournament = await apiQuery.GetSingleEventAsync(tournamentSlug, "tournament/" + eventSlug, (int)numericUpDownEventPage.Value, cancellationToken);
             if (tournament.events == null)
             {
                 richTextBoxLog.Text += "Failed to get tournament\r\n";
-                UnlockControls();
                 return;
             }
 
@@ -2805,8 +2903,6 @@ namespace smashgg_to_liquipedia
             // Expand the tournament node
             root.Expand();
             treeView1.EndUpdate();
-
-            UnlockControls();
 
             richTextBoxLog.Text += "Get event complete.\r\n";
         }

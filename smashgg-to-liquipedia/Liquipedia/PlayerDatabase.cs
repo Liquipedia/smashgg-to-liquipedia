@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace smashgg_to_liquipedia
 {
@@ -28,11 +30,13 @@ namespace smashgg_to_liquipedia
 
         private int revID;
 
-        public PlayerDatabase(DbSource source, IFormMain form)
+        /// <summary>
+        /// Creates an empty database. Call <see cref="ReadDatabaseFromFileAsync"/> to load it.
+        /// </summary>
+        public PlayerDatabase(IFormMain form)
         {
             this.form = form;
             players = new Dictionary<int, PlayerInfo>();
-            ReadDatabaseFromFile(source);
         }
 
         public int RevID
@@ -40,11 +44,15 @@ namespace smashgg_to_liquipedia
             get { return revID; }
         }
 
-        public bool ReadDatabaseFromFile(DbSource source)
+        /// <summary>
+        /// Loads the AKA database from file, replacing the current contents.
+        /// The current contents stay in use until the read completes.
+        /// </summary>
+        /// <param name="source">Which database to read</param>
+        /// <param name="cancellationToken">Cancels the read</param>
+        /// <returns>True if the database was read successfully</returns>
+        public async Task<bool> ReadDatabaseFromFileAsync(DbSource source, CancellationToken cancellationToken = default)
         {
-            // Clear the list
-            players.Clear();
-
             // Set the filename
             string filename = string.Empty;
             if (source == DbSource.Fighters)
@@ -57,34 +65,38 @@ namespace smashgg_to_liquipedia
             }
             else
             {
+                players = new Dictionary<int, PlayerInfo>();
                 return false;
             }
 
             // Read AKA database json if available
-            string json = string.Empty;
             try
             {
-                using (FileStream file = File.OpenRead(filename))
+                using (FileStream file = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true))
+                using (JsonDocument doc = await JsonDocument.ParseAsync(file, default, cancellationToken))
                 {
-                    using (JsonDocument doc = JsonDocument.Parse(file))
-                    {
-                        JsonElement parse = doc.RootElement.GetProperty("parse");
+                    JsonElement parse = doc.RootElement.GetProperty("parse");
 
-                        revID = parse.GetProperty("revid").GetInt32();
-                        json = parse.GetProperty("wikitext").GetProperty("*").GetString();
-                        ParseWikitext(json);
+                    int newRevID = parse.GetProperty("revid").GetInt32();
+                    string json = parse.GetProperty("wikitext").GetProperty("*").GetString();
 
-                        return true;
-                    }
+                    // Build into a new dictionary and swap it in, so readers never see a partial database
+                    Dictionary<int, PlayerInfo> newPlayers = new Dictionary<int, PlayerInfo>();
+                    ParseWikitext(json, newPlayers);
+
+                    players = newPlayers;
+                    revID = newRevID;
+                    return true;
                 }
             }
-            catch
+            catch (Exception ex) when (!(ex is OperationCanceledException))
             {
+                players = new Dictionary<int, PlayerInfo>();
                 return false;
             }
         }
 
-        private void ParseWikitext(string json)
+        private void ParseWikitext(string json, Dictionary<int, PlayerInfo> players)
         {
             string segment = "";
             int i = 0;
@@ -158,7 +170,13 @@ namespace smashgg_to_liquipedia
             }
         }
 
-        public bool SaveDatabase(string json, DbSource source)
+        /// <summary>
+        /// Saves the AKA database json to file
+        /// </summary>
+        /// <param name="json">Database json, as returned by the wiki API</param>
+        /// <param name="source">Which database to save</param>
+        /// <returns>True if the file was saved successfully</returns>
+        public async Task<bool> SaveDatabaseAsync(string json, DbSource source)
         {
             // Save data to file
             try
@@ -178,9 +196,11 @@ namespace smashgg_to_liquipedia
                     return false;
                 }
 
-                StreamWriter userinfo = new StreamWriter(filename);
-                userinfo.Write(json);
-                userinfo.Close();
+                using (FileStream file = new FileStream(filename, FileMode.Create, FileAccess.Write, FileShare.None, 4096, useAsync: true))
+                using (StreamWriter writer = new StreamWriter(file))
+                {
+                    await writer.WriteAsync(json);
+                }
 
                 return true;
             }
