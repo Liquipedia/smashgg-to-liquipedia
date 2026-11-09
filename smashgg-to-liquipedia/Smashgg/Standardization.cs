@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Text.Json;
 
 namespace smashgg_to_liquipedia.Smashgg
 {
@@ -9,18 +10,13 @@ namespace smashgg_to_liquipedia.Smashgg
 
         public Standardization()
         {
-            // Populate flag abbreviation list
-            using (StreamReader file = new StreamReader("Flag List.csv"))
+            // Populate flag abbreviation list: country name -> two letter code
+            using (FileStream file = File.OpenRead("Flag List.json"))
             {
-                while (!file.EndOfStream)
+                Dictionary<string, string> flags = JsonSerializer.Deserialize<Dictionary<string, string>>(file);
+                foreach (KeyValuePair<string, string> flag in flags)
                 {
-                    string line = file.ReadLine();
-                    string[] text = line.Split(',');
-
-                    if (text.Length >= 2)
-                    {
-                        flagList.Add(text[0].ToLower(), text[1].ToLower());
-                    }
+                    flagList.Add(flag.Key.ToLower(), flag.Value.ToLower());
                 }
             }
         }
