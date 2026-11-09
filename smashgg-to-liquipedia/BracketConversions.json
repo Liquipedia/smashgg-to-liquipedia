@@ -1,7 +1,37 @@
 {
     "singles": {
+        "2SEBracket": "Bracket/2",
+        "4DEWBracketA": "Bracket/4-2Q",
         "4DE4SBracket2": "Bracket/4U4L2DSL1D",
-        "DEFinalSmwBracket": "Bracket/2U2L1D"
+        "4DE4SSmwBracket": "Bracket/4U4L2DSL1D",
+        "DEFinalSmwBracket": "Bracket/2U2L1D",
+        "2Qual-DEFinalSmwBracket": "Bracket/2-1Q-U-2L1D-1Q",
+        "3Qual-DEFinalBracket": "Bracket/2-2QL-U-2-1Q",
+        "2Qual-8SEBracket": "Bracket/8-2Q",
+        "8SEBracket": "Bracket/8",
+        "8SEBracketSmw": "Bracket/8",
+        "2Qual-8DEWBracket": "Bracket/8-2Q",
+        "8DELBracketA": "Bracket/4L2D-2Q",
+        "8DELBracketSmwA": "Bracket/4L2D-2Q",
+        "8DE8SBracket": "Bracket/8U8L4DSL2DSL1D",
+        "2Qual-12DELBracketSmwA": "Bracket/8L2D-2Q",
+        "2Qual-16DELBracketSmwA": "Bracket/8L4DSL2D-2Q",
+        "16SEBracket": "Bracket/16",
+        "16DEWBracketA2": "Bracket/16-2Q",
+        "8Qual-16SEBracket": "Bracket/16-8Q",
+        "8Qual-16DEWBracketA": "Bracket/16-8Q",
+        "4Qual-16DELBracketSmwA": "Bracket/8L4D-4Q",
+        "24DELBracketSmwA": "Bracket/16L4DSL2D-2Q",
+        "2Qual-24DELBracketSmwA": "Bracket/16L4DSL2D-2Q",
+        "32DEWBracketA": "Bracket/32-2Q",
+        "2Qual-32DEWBracketA": "Bracket/32-2Q",
+        "32DELBracketA": "Bracket/16L8DSL4DSL2D-2Q",
+        "32DELBracketSmwA": "Bracket/16L8DSL4DSL2D-2Q",
+        "2Qual-32DELBracketSmwA": "Bracket/16L8DSL4DSL2D-2Q",
+        "8Qual-32DELBracketSmwA": "Bracket/16L8D-8Q",
+        "96DELBracketSmwA2": "Bracket/64L16D-16Q",
+        "128DEWBracketA": "Bracket/128-8Q",
+        "128DEWBracketA2": "Bracket/128-16Q"
     },
     "doubles": {
         "4DE4SDoublesBracket": "Bracket/4U4L2DSL1D"
