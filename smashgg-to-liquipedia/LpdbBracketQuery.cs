@@ -41,7 +41,11 @@ namespace smashgg_to_liquipedia
 
         public void SetApiKey(string apiKey)
         {
-            this.apiKey = apiKey;
+            if (apiKey.StartsWith("Apikey"))
+            {
+                apiKey = apiKey.Substring(6);
+            }
+            this.apiKey = apiKey.Trim();
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Apikey", apiKey);
         }
 
