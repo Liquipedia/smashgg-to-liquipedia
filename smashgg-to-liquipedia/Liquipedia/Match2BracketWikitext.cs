@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using smashgg_to_liquipedia.Smashgg.Schema;
 
 namespace smashgg_to_liquipedia.Liquipedia
@@ -29,6 +30,8 @@ namespace smashgg_to_liquipedia.Liquipedia
         /// Kind of opponent template written for each slot
         /// </summary>
         public enum OpponentType { Solo, Duo }
+
+        private static readonly Regex RoundMatchRegex = new Regex(@"R(?<round>[0-9]{2})-M(?<match>[0-9]{3})", RegexOptions.Compiled);
 
         public class Options
         {
@@ -222,7 +225,19 @@ namespace smashgg_to_liquipedia.Liquipedia
                 string matchId = Match2BracketMapper.ToShortId(templateMatch.match2id);
                 bracket.Matches.TryGetValue(matchId, out Set set);
 
-                text.Append("\r\n|").Append(matchId).Append("=")
+                text.Append("\r\n|");
+                Match m = RoundMatchRegex.Match(matchId);
+                if (m.Success)
+                {
+                    int round = int.Parse(m.Groups["round"].Value);
+                    int match = int.Parse(m.Groups["match"].Value);
+                    text.Append('R').Append(round).Append('M').Append(match);
+                }
+                else
+                {
+                    text.Append(matchId);
+                }
+                text.Append("=")
                     .Append(ConvertMatch(bracket, templateMatch, set));
             }
 
