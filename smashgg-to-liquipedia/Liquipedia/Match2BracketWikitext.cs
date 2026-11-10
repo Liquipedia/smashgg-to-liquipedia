@@ -238,7 +238,6 @@ namespace smashgg_to_liquipedia.Liquipedia
         {
             if (set == null)
             {
-                // TODO: decide whether unfilled matches get an empty {{Match}} or are omitted
                 return "{{Match}}";
             }
 
@@ -351,10 +350,6 @@ namespace smashgg_to_liquipedia.Liquipedia
         /// </summary>
         private string ConvertScore(Set set, int slotIndex)
         {
-            // TODO: DQs ("DQ" display score) and sets reported without a game count
-            // (winnerId set, both counts 0), which the legacy output marked with a checkmark.
-            // Note Set.entrant1wins/entrant2wins come from displayScore order, which is
-            // assumed to be slot order.
             int wins = slotIndex == 0 ? set.entrant1wins : set.entrant2wins;
             return wins.ToString();
         }
