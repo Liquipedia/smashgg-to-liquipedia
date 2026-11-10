@@ -30,6 +30,7 @@ namespace smashgg_to_liquipedia.Liquipedia
         }
 
         private const string PREREQ_SET = "set";
+        private const string PREREQ_BYE = "bye";
         private const int PLACEMENT_WINNER = 1;
         private const int PLACEMENT_LOSER = 2;
 
@@ -55,7 +56,8 @@ namespace smashgg_to_liquipedia.Liquipedia
         {
             foreach (Set set in sets)
             {
-                if (!string.IsNullOrEmpty(set.id) && !setsById.ContainsKey(set.id))
+                // Placeholders would otherwise look like the bracket's last sets, as nothing is fed by them
+                if (!string.IsNullOrEmpty(set.id) && !setsById.ContainsKey(set.id) && !IsPlaceholder(set))
                 {
                     setsById.Add(set.id, set);
                 }
@@ -81,8 +83,9 @@ namespace smashgg_to_liquipedia.Liquipedia
         }
 
         /// <summary>
-        /// Maps sets onto a template. The template's last matches are paired with the bracket's last sets if
-        /// nothing has been mapped yet, and otherwise with the unplaced sets feeding the sets already mapped.
+        /// Maps sets onto a template. The template's last matches are paired with the unplaced sets on
+        /// <paramref name="side"/> that feed the sets already mapped, or with that side's own last sets
+        /// if there are none (e.g. nothing mapped yet).
         /// </summary>
         /// <param name="templateMatches">Template matches, as returned by <see cref="LpdbBracketQuery.FetchBracket"/></param>
         /// <param name="side">Restricts which sets the template's last matches may be paired with</param>
@@ -96,38 +99,63 @@ namespace smashgg_to_liquipedia.Liquipedia
         }
 
         /// <summary>
-        /// Ids of the sets that no template has placed so far
+        /// Ids of the sets that no template has placed so far. Byes are left out, since templates
+        /// usually seed those entrants directly instead of showing the bye.
         /// </summary>
         public List<string> UnplacedSetIds()
         {
-            return setsById.Values.Where(set => !assignedSets.Contains(set)).Select(set => set.id).ToList();
+            return setsById.Values
+                .Where(set => !assignedSets.Contains(set) && !IsBye(set))
+                .Select(set => set.id)
+                .ToList();
         }
 
         private List<Set> StartingSets(Side side)
         {
-            IEnumerable<Set> candidates;
-            if (placements.Count == 0)
-            {
-                candidates = roots
-                    .OrderBy(set => set.round)
-                    .ThenBy(set => set.match)
-                    .ThenBy(set => set.id);
-            }
-            else
+            if (placements.Count > 0)
             {
                 // Top to bottom along the edge of what is already placed
-                candidates = placements
+                List<Set> edge = placements
                     .OrderBy(placement => placement.templateIndex)
                     .ThenBy(placement => Data(placement.match).coordinates?.sectionIndex ?? 0)
                     .ThenBy(placement => Data(placement.match).coordinates?.roundIndex ?? 0)
                     .ThenBy(placement => Data(placement.match).coordinates?.matchIndexInRound ?? 0)
                     .ThenBy(placement => placement.match.match2id)
                     .SelectMany(placement => WinnerFeeders(placement.set))
-                    .Where(set => !assignedSets.Contains(set))
-                    .Distinct();
+                    .Where(set => !assignedSets.Contains(set) && OnSide(set, side))
+                    .Distinct()
+                    .ToList();
+                if (edge.Count > 0)
+                {
+                    return edge;
+                }
+                // Nothing placed so far is fed from this side (e.g. a pool's losers bracket, which ends in
+                // its own qualifiers), so start from this side's own last sets
             }
 
-            return candidates.Where(set => OnSide(set, side)).ToList();
+            return roots
+                .Where(set => !assignedSets.Contains(set) && OnSide(set, side))
+                .OrderBy(set => set.round)
+                .ThenBy(set => set.match)
+                .ThenBy(set => set.id)
+                .ToList();
+        }
+
+        /// <summary>
+        /// A set start.gg creates to fill out the bracket size, with byes in every slot
+        /// </summary>
+        private static bool IsPlaceholder(Set set)
+        {
+            return set.slots != null && set.slots.Count > 0
+                && set.slots.All(slot => slot == null || slot.prereqType == PREREQ_BYE);
+        }
+
+        /// <summary>
+        /// A set in which an entrant advances without an opponent
+        /// </summary>
+        private static bool IsBye(Set set)
+        {
+            return set.slots != null && set.slots.Any(slot => slot != null && slot.prereqType == PREREQ_BYE);
         }
 
         private static bool OnSide(Set set, Side side)
