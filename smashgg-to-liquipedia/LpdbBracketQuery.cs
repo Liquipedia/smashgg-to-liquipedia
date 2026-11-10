@@ -166,6 +166,7 @@ namespace smashgg_to_liquipedia
             bracketType = NormalizeBracketType(bracketType);
             var queryParameters = new Dictionary<string, string>
             {
+                { "wiki", "commons" },
                 { "conditions", $"[[namespace::10]] and [[pagename::{bracketType}]]" },
                 { "query", "match2id, match2bracketdata" },
                 { "order", "match2id asc" },
