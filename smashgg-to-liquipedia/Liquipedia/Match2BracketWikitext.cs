@@ -306,17 +306,34 @@ namespace smashgg_to_liquipedia.Liquipedia
             switch (Opponents)
             {
                 case OpponentType.Duo:
-                    // TODO: verify the duo opponent template name and parameters on the wiki
-                    return string.Empty;
+                    var opponent = new StringBuilder("{{DuoOpponent");
+                    var players = entrant.participants;
+                    if (players.Count == 0)
+                    {
+                        return opponent.Append("}}").ToString();
+                    }
+                    for (int i = 0; i < players.Count; i++)
+                    {
+                        var opponentPlayer = players[i];
+                        opponent.Append("|p").Append(i + 1).Append(opponentPlayer.gamerTag);
+                        if (!string.IsNullOrEmpty(opponentPlayer.user.location.country))
+                        {
+                            opponent.Append("|p").Append(i + 1).Append("flag=").Append(opponentPlayer.user.location.country);
+                        }
+                    }
+                    if (score != string.Empty)
+                    {
+                        opponent.Append("|score=").Append(score);
+                    }
+                    return opponent.Append("}}").ToString();
 
                 default:
-                    // TODO: verify SoloOpponent parameters on the wiki
                     Participant player = entrant.participants.FirstOrDefault();
                     if (player == null)
                     {
                         return string.Empty;
                     }
-                    var opponent = new StringBuilder("{{SoloOpponent|").Append(player.gamerTag);
+                    opponent = new StringBuilder("{{SoloOpponent|").Append(player.gamerTag);
                     if (!string.IsNullOrEmpty(player.user.location.country))
                     {
                         opponent.Append("|flag=").Append(player.user.location.country);
