@@ -521,7 +521,15 @@ namespace smashgg_to_liquipedia
                 richTextBoxLog.Text += unplaced + " start.gg sets are not in any bracket\r\n";
             }
 
-            richTextBoxLpOutput.Text = DescribeBrackets(match2Brackets);
+            var wikitext = new Match2BracketWikitext(selectedEvent, entrantList, new Match2BracketWikitext.Options
+            {
+                IncludeUnfinished = checkBoxUnfinished.Checked,
+                MatchDetails = checkBoxMatchDetails.Checked,
+                FillByes = checkBoxFillByes.Checked,
+                UseFightersStyle = radioButtonFighters.Checked,
+            });
+            richTextBoxLpOutput.Text = wikitext.Convert(match2Brackets);
+            richTextBoxLog.Text += wikitext.Log;
         }
 
         /// <summary>
@@ -533,6 +541,7 @@ namespace smashgg_to_liquipedia
             List<LpdbMatch2> template;
             try
             {
+                lpdbQuery.SetToken(lpdbApiKey);
                 template = await lpdbQuery.GetBracketAsync(bracketType, cancellationToken);
             }
             catch (Exception ex) when (ex is LpdbException || ex is HttpRequestException
@@ -548,61 +557,6 @@ namespace smashgg_to_liquipedia
                 return null;
             }
             return template;
-        }
-
-        /// <summary>
-        /// Lists the start.gg set placed in each template match
-        /// </summary>
-        private string DescribeBrackets(List<Match2Bracket> brackets)
-        {
-            var text = new System.Text.StringBuilder();
-            foreach (Match2Bracket bracket in brackets)
-            {
-                if (bracket.Header != string.Empty)
-                {
-                    text.AppendLine(bracket.Header);
-                }
-                text.AppendLine(bracket.BracketType);
-
-                foreach (LpdbMatch2 match in bracket.TemplateMatches)
-                {
-                    string matchId = Match2BracketMapper.ToShortId(match.match2id);
-                    text.Append("  ").Append(matchId.PadRight(10));
-                    if (bracket.Matches.TryGetValue(matchId, out Set set))
-                    {
-                        text.Append(SlotName(set, 0)).Append(" vs ").Append(SlotName(set, 1));
-                        if (!string.IsNullOrEmpty(set.DisplayScore))
-                        {
-                            text.Append("  (").Append(set.DisplayScore).Append(")");
-                        }
-                    }
-                    else
-                    {
-                        text.Append("(no set)");
-                    }
-                    text.AppendLine();
-                }
-                text.AppendLine();
-            }
-            return text.ToString().TrimEnd();
-        }
-
-        /// <summary>
-        /// Name of the entrant in a set slot, with team members joined
-        /// </summary>
-        private string SlotName(Set set, int slotIndex)
-        {
-            if (set.slots == null || set.slots.Count <= slotIndex || set.slots[slotIndex]?.entrant == null)
-            {
-                return "-";
-            }
-
-            int entrantId = set.slots[slotIndex].entrant.id;
-            if (!entrantList.TryGetValue(entrantId, out Entrant entrant) || entrant.participants.Count == 0)
-            {
-                return "#" + entrantId;
-            }
-            return string.Join(" / ", entrant.participants.Select(participant => participant.gamerTag));
         }
 
         /// <summary>
@@ -737,7 +691,7 @@ namespace smashgg_to_liquipedia
         private void buttonGroupTable_Click(object sender, EventArgs e)
         {
             string output = string.Empty;
-            Liquipedia.LpOutput lpout = new Liquipedia.LpOutput(selectedEvent, ref entrantList, ref setList, ref roundList);
+            Liquipedia.LpOutput lpout = new Liquipedia.LpOutput(selectedEvent, ref entrantList, ref setList);
 
             Dictionary<int, PoolRecord> poolData = new Dictionary<int, PoolRecord>();
 
@@ -1141,7 +1095,7 @@ namespace smashgg_to_liquipedia
         /// <param name="currentGroup">Pool in the phase to output</param>
         private void OutputSinglesPhase(Phase phase, Dictionary<int, PoolRecord> poolData, ref string lastWave, PhaseGroup currentGroup, Tournament.ActivityState state, PoolRecord.PoolType poolType)
         {
-            Liquipedia.LpOutput lpout = new Liquipedia.LpOutput(selectedEvent, ref entrantList, ref setList, ref roundList);
+            Liquipedia.LpOutput lpout = new Liquipedia.LpOutput(selectedEvent, ref entrantList, ref setList);
 
             // Output to textbox
             // Wave headers
@@ -1211,7 +1165,7 @@ namespace smashgg_to_liquipedia
         /// <param name="currentGroup">Element within the phase</param>
         private void OutputDoublesPhase(Phase phase, Dictionary<int, PoolRecord> poolData, ref string lastWave, PhaseGroup currentGroup, Tournament.ActivityState state, PoolRecord.PoolType poolType)
         {
-            Liquipedia.LpOutput lpout = new Liquipedia.LpOutput(selectedEvent, ref entrantList, ref setList, ref roundList);
+            Liquipedia.LpOutput lpout = new Liquipedia.LpOutput(selectedEvent, ref entrantList, ref setList);
 
             // Output to textbox
             // Wave headers
