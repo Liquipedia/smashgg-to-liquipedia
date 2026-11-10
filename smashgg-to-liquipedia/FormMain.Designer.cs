@@ -44,7 +44,7 @@
             this.checkBoxLosers = new System.Windows.Forms.CheckBox();
             this.checkBoxFillByes = new System.Windows.Forms.CheckBox();
             this.progressBar = new System.Windows.Forms.ProgressBar();
-            this.checkBoxGuessFinal = new System.Windows.Forms.CheckBox();
+            this.checkBoxOutputFinal = new System.Windows.Forms.CheckBox();
             this.numericUpDownAdvanceLosers = new System.Windows.Forms.NumericUpDown();
             this.label6 = new System.Windows.Forms.Label();
             this.buttonPrizePool = new System.Windows.Forms.Button();
@@ -73,30 +73,13 @@
             this.tabPageRetrievedData = new System.Windows.Forms.TabPage();
             this.richTextBoxLosers = new System.Windows.Forms.RichTextBox();
             this.richTextBoxWinners = new System.Windows.Forms.RichTextBox();
-            this.buttonLoserShift = new System.Windows.Forms.Button();
             this.label10 = new System.Windows.Forms.Label();
-            this.numericUpDownLosersEnd = new System.Windows.Forms.NumericUpDown();
-            this.label13 = new System.Windows.Forms.Label();
-            this.label12 = new System.Windows.Forms.Label();
-            this.numericUpDownLosersOffset = new System.Windows.Forms.NumericUpDown();
-            this.label11 = new System.Windows.Forms.Label();
-            this.numericUpDownLosersStart = new System.Windows.Forms.NumericUpDown();
-            this.checkBoxLockLosers = new System.Windows.Forms.CheckBox();
-            this.buttonWinnerShift = new System.Windows.Forms.Button();
             this.label9 = new System.Windows.Forms.Label();
-            this.numericUpDownWinnersEnd = new System.Windows.Forms.NumericUpDown();
-            this.label4 = new System.Windows.Forms.Label();
-            this.label3 = new System.Windows.Forms.Label();
-            this.numericUpDownWinnersOffset = new System.Windows.Forms.NumericUpDown();
-            this.label2 = new System.Windows.Forms.Label();
-            this.numericUpDownWinnersStart = new System.Windows.Forms.NumericUpDown();
-            this.checkBoxLockWinners = new System.Windows.Forms.CheckBox();
             this.buttonGetEvent = new System.Windows.Forms.Button();
-            this.buttonReloadBracketConversions = new System.Windows.Forms.Button();
             this.checkBoxSorting = new System.Windows.Forms.CheckBox();
-            this.richTextBoxExLpWinnersBracket = new RichTextBoxEx();
-            this.richTextBoxExLpFinalBracket = new RichTextBoxEx();
-            this.richTextBoxExLpLosersBracket = new RichTextBoxEx();
+            this.textBoxBracketTypeWinners = new System.Windows.Forms.TextBox();
+            this.textBoxBracketTypeFinals = new System.Windows.Forms.TextBox();
+            this.textBoxBracketTypeLosers = new System.Windows.Forms.TextBox();
             this.panel3 = new System.Windows.Forms.Panel();
             this.radioButton4DE4S = new System.Windows.Forms.RadioButton();
             this.radioButtonDEFinal = new System.Windows.Forms.RadioButton();
@@ -110,12 +93,6 @@
             this.tabControl.SuspendLayout();
             this.tabPageTournamentExplorer.SuspendLayout();
             this.tabPageRetrievedData.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownLosersEnd)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownLosersOffset)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownLosersStart)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownWinnersEnd)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownWinnersOffset)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownWinnersStart)).BeginInit();
             this.panel3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownEventPage)).BeginInit();
             this.SuspendLayout();
@@ -278,16 +255,16 @@
             this.progressBar.Size = new System.Drawing.Size(300, 28);
             this.progressBar.TabIndex = 15;
             // 
-            // checkBoxGuessFinal
+            // checkBoxOutputFinal
             // 
-            this.checkBoxGuessFinal.AutoSize = true;
-            this.checkBoxGuessFinal.Location = new System.Drawing.Point(636, 341);
-            this.checkBoxGuessFinal.Margin = new System.Windows.Forms.Padding(4);
-            this.checkBoxGuessFinal.Name = "checkBoxGuessFinal";
-            this.checkBoxGuessFinal.Size = new System.Drawing.Size(107, 20);
-            this.checkBoxGuessFinal.TabIndex = 14;
-            this.checkBoxGuessFinal.Text = "Guess Finals";
-            this.checkBoxGuessFinal.UseVisualStyleBackColor = true;
+            this.checkBoxOutputFinal.AutoSize = true;
+            this.checkBoxOutputFinal.Location = new System.Drawing.Point(636, 341);
+            this.checkBoxOutputFinal.Margin = new System.Windows.Forms.Padding(4);
+            this.checkBoxOutputFinal.Name = "checkBoxOutputFinal";
+            this.checkBoxOutputFinal.Size = new System.Drawing.Size(107, 20);
+            this.checkBoxOutputFinal.TabIndex = 14;
+            this.checkBoxOutputFinal.Text = "Output Finals";
+            this.checkBoxOutputFinal.UseVisualStyleBackColor = true;
             // 
             // numericUpDownAdvanceLosers
             // 
@@ -578,24 +555,8 @@
             this.tabPageRetrievedData.Controls.Add(this.richTextBoxEntrants);
             this.tabPageRetrievedData.Controls.Add(this.richTextBoxLosers);
             this.tabPageRetrievedData.Controls.Add(this.richTextBoxWinners);
-            this.tabPageRetrievedData.Controls.Add(this.buttonLoserShift);
             this.tabPageRetrievedData.Controls.Add(this.label10);
-            this.tabPageRetrievedData.Controls.Add(this.numericUpDownLosersEnd);
-            this.tabPageRetrievedData.Controls.Add(this.label13);
-            this.tabPageRetrievedData.Controls.Add(this.label12);
-            this.tabPageRetrievedData.Controls.Add(this.numericUpDownLosersOffset);
-            this.tabPageRetrievedData.Controls.Add(this.label11);
-            this.tabPageRetrievedData.Controls.Add(this.numericUpDownLosersStart);
-            this.tabPageRetrievedData.Controls.Add(this.checkBoxLockLosers);
-            this.tabPageRetrievedData.Controls.Add(this.buttonWinnerShift);
             this.tabPageRetrievedData.Controls.Add(this.label9);
-            this.tabPageRetrievedData.Controls.Add(this.numericUpDownWinnersEnd);
-            this.tabPageRetrievedData.Controls.Add(this.label4);
-            this.tabPageRetrievedData.Controls.Add(this.label3);
-            this.tabPageRetrievedData.Controls.Add(this.numericUpDownWinnersOffset);
-            this.tabPageRetrievedData.Controls.Add(this.label2);
-            this.tabPageRetrievedData.Controls.Add(this.numericUpDownWinnersStart);
-            this.tabPageRetrievedData.Controls.Add(this.checkBoxLockWinners);
             this.tabPageRetrievedData.Location = new System.Drawing.Point(4, 25);
             this.tabPageRetrievedData.Margin = new System.Windows.Forms.Padding(4);
             this.tabPageRetrievedData.Name = "tabPageRetrievedData";
@@ -625,17 +586,6 @@
             this.richTextBoxWinners.TabIndex = 0;
             this.richTextBoxWinners.Text = "";
             // 
-            // buttonLoserShift
-            // 
-            this.buttonLoserShift.Location = new System.Drawing.Point(763, 142);
-            this.buttonLoserShift.Margin = new System.Windows.Forms.Padding(4);
-            this.buttonLoserShift.Name = "buttonLoserShift";
-            this.buttonLoserShift.Size = new System.Drawing.Size(100, 28);
-            this.buttonLoserShift.TabIndex = 20;
-            this.buttonLoserShift.Text = "Shift";
-            this.buttonLoserShift.UseVisualStyleBackColor = true;
-            this.buttonLoserShift.Click += new System.EventHandler(this.buttonloserShift_Click);
-            // 
             // label10
             // 
             this.label10.AutoSize = true;
@@ -646,93 +596,6 @@
             this.label10.TabIndex = 6;
             this.label10.Text = "Losers";
             // 
-            // numericUpDownLosersEnd
-            // 
-            this.numericUpDownLosersEnd.Location = new System.Drawing.Point(571, 149);
-            this.numericUpDownLosersEnd.Margin = new System.Windows.Forms.Padding(4);
-            this.numericUpDownLosersEnd.Name = "numericUpDownLosersEnd";
-            this.numericUpDownLosersEnd.Size = new System.Drawing.Size(51, 22);
-            this.numericUpDownLosersEnd.TabIndex = 9;
-            // 
-            // label13
-            // 
-            this.label13.AutoSize = true;
-            this.label13.Location = new System.Drawing.Point(625, 128);
-            this.label13.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label13.Name = "label13";
-            this.label13.Size = new System.Drawing.Size(41, 16);
-            this.label13.TabIndex = 12;
-            this.label13.Text = "Offset";
-            // 
-            // label12
-            // 
-            this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(567, 128);
-            this.label12.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(31, 16);
-            this.label12.TabIndex = 11;
-            this.label12.Text = "End";
-            // 
-            // numericUpDownLosersOffset
-            // 
-            this.numericUpDownLosersOffset.Location = new System.Drawing.Point(629, 149);
-            this.numericUpDownLosersOffset.Margin = new System.Windows.Forms.Padding(4);
-            this.numericUpDownLosersOffset.Maximum = new decimal(new int[] {
-            20,
-            0,
-            0,
-            0});
-            this.numericUpDownLosersOffset.Minimum = new decimal(new int[] {
-            20,
-            0,
-            0,
-            -2147483648});
-            this.numericUpDownLosersOffset.Name = "numericUpDownLosersOffset";
-            this.numericUpDownLosersOffset.Size = new System.Drawing.Size(51, 22);
-            this.numericUpDownLosersOffset.TabIndex = 8;
-            // 
-            // label11
-            // 
-            this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(508, 128);
-            this.label11.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(34, 16);
-            this.label11.TabIndex = 10;
-            this.label11.Text = "Start";
-            // 
-            // numericUpDownLosersStart
-            // 
-            this.numericUpDownLosersStart.Location = new System.Drawing.Point(512, 149);
-            this.numericUpDownLosersStart.Margin = new System.Windows.Forms.Padding(4);
-            this.numericUpDownLosersStart.Name = "numericUpDownLosersStart";
-            this.numericUpDownLosersStart.Size = new System.Drawing.Size(51, 22);
-            this.numericUpDownLosersStart.TabIndex = 7;
-            // 
-            // checkBoxLockLosers
-            // 
-            this.checkBoxLockLosers.AutoSize = true;
-            this.checkBoxLockLosers.Location = new System.Drawing.Point(688, 150);
-            this.checkBoxLockLosers.Margin = new System.Windows.Forms.Padding(4);
-            this.checkBoxLockLosers.Name = "checkBoxLockLosers";
-            this.checkBoxLockLosers.Size = new System.Drawing.Size(58, 20);
-            this.checkBoxLockLosers.TabIndex = 14;
-            this.checkBoxLockLosers.Text = "Lock";
-            this.checkBoxLockLosers.UseVisualStyleBackColor = true;
-            this.checkBoxLockLosers.CheckedChanged += new System.EventHandler(this.checkBoxLock_CheckedChanged);
-            // 
-            // buttonWinnerShift
-            // 
-            this.buttonWinnerShift.Location = new System.Drawing.Point(328, 142);
-            this.buttonWinnerShift.Margin = new System.Windows.Forms.Padding(4);
-            this.buttonWinnerShift.Name = "buttonWinnerShift";
-            this.buttonWinnerShift.Size = new System.Drawing.Size(100, 28);
-            this.buttonWinnerShift.TabIndex = 19;
-            this.buttonWinnerShift.Text = "Shift";
-            this.buttonWinnerShift.UseVisualStyleBackColor = true;
-            this.buttonWinnerShift.Click += new System.EventHandler(this.buttonWinnerShift_Click);
-            // 
             // label9
             // 
             this.label9.AutoSize = true;
@@ -742,82 +605,6 @@
             this.label9.Size = new System.Drawing.Size(56, 16);
             this.label9.TabIndex = 6;
             this.label9.Text = "Winners";
-            // 
-            // numericUpDownWinnersEnd
-            // 
-            this.numericUpDownWinnersEnd.Location = new System.Drawing.Point(136, 149);
-            this.numericUpDownWinnersEnd.Margin = new System.Windows.Forms.Padding(4);
-            this.numericUpDownWinnersEnd.Name = "numericUpDownWinnersEnd";
-            this.numericUpDownWinnersEnd.Size = new System.Drawing.Size(51, 22);
-            this.numericUpDownWinnersEnd.TabIndex = 3;
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(191, 128);
-            this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(41, 16);
-            this.label4.TabIndex = 6;
-            this.label4.Text = "Offset";
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(132, 128);
-            this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(31, 16);
-            this.label3.TabIndex = 6;
-            this.label3.Text = "End";
-            // 
-            // numericUpDownWinnersOffset
-            // 
-            this.numericUpDownWinnersOffset.Location = new System.Drawing.Point(195, 149);
-            this.numericUpDownWinnersOffset.Margin = new System.Windows.Forms.Padding(4);
-            this.numericUpDownWinnersOffset.Maximum = new decimal(new int[] {
-            20,
-            0,
-            0,
-            0});
-            this.numericUpDownWinnersOffset.Minimum = new decimal(new int[] {
-            20,
-            0,
-            0,
-            -2147483648});
-            this.numericUpDownWinnersOffset.Name = "numericUpDownWinnersOffset";
-            this.numericUpDownWinnersOffset.Size = new System.Drawing.Size(51, 22);
-            this.numericUpDownWinnersOffset.TabIndex = 3;
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(73, 128);
-            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(34, 16);
-            this.label2.TabIndex = 6;
-            this.label2.Text = "Start";
-            // 
-            // numericUpDownWinnersStart
-            // 
-            this.numericUpDownWinnersStart.Location = new System.Drawing.Point(77, 149);
-            this.numericUpDownWinnersStart.Margin = new System.Windows.Forms.Padding(4);
-            this.numericUpDownWinnersStart.Name = "numericUpDownWinnersStart";
-            this.numericUpDownWinnersStart.Size = new System.Drawing.Size(51, 22);
-            this.numericUpDownWinnersStart.TabIndex = 3;
-            // 
-            // checkBoxLockWinners
-            // 
-            this.checkBoxLockWinners.AutoSize = true;
-            this.checkBoxLockWinners.Location = new System.Drawing.Point(253, 150);
-            this.checkBoxLockWinners.Margin = new System.Windows.Forms.Padding(4);
-            this.checkBoxLockWinners.Name = "checkBoxLockWinners";
-            this.checkBoxLockWinners.Size = new System.Drawing.Size(58, 20);
-            this.checkBoxLockWinners.TabIndex = 14;
-            this.checkBoxLockWinners.Text = "Lock";
-            this.checkBoxLockWinners.UseVisualStyleBackColor = true;
-            this.checkBoxLockWinners.CheckedChanged += new System.EventHandler(this.checkBoxLock_CheckedChanged);
             // 
             // buttonGetEvent
             // 
@@ -843,35 +630,30 @@
             this.checkBoxSorting.Text = "Sort sets";
             this.checkBoxSorting.UseVisualStyleBackColor = true;
             // 
-            // richTextBoxExLpWinnersBracket
-            // 
-            this.richTextBoxExLpWinnersBracket.Cue = null;
-            this.richTextBoxExLpWinnersBracket.Location = new System.Drawing.Point(17, 401);
-            this.richTextBoxExLpWinnersBracket.Margin = new System.Windows.Forms.Padding(4);
-            this.richTextBoxExLpWinnersBracket.Name = "richTextBoxExLpWinnersBracket";
-            this.richTextBoxExLpWinnersBracket.Size = new System.Drawing.Size(299, 130);
-            this.richTextBoxExLpWinnersBracket.TabIndex = 13;
-            this.richTextBoxExLpWinnersBracket.Text = "";
-            // 
-            // richTextBoxExLpFinalBracket
-            // 
-            this.richTextBoxExLpFinalBracket.Cue = null;
-            this.richTextBoxExLpFinalBracket.Location = new System.Drawing.Point(636, 401);
-            this.richTextBoxExLpFinalBracket.Margin = new System.Windows.Forms.Padding(4);
-            this.richTextBoxExLpFinalBracket.Name = "richTextBoxExLpFinalBracket";
-            this.richTextBoxExLpFinalBracket.Size = new System.Drawing.Size(297, 131);
-            this.richTextBoxExLpFinalBracket.TabIndex = 13;
-            this.richTextBoxExLpFinalBracket.Text = resources.GetString("richTextBoxExLpFinalBracket.Text");
-            // 
-            // richTextBoxExLpLosersBracket
-            // 
-            this.richTextBoxExLpLosersBracket.Cue = null;
-            this.richTextBoxExLpLosersBracket.Location = new System.Drawing.Point(327, 401);
-            this.richTextBoxExLpLosersBracket.Margin = new System.Windows.Forms.Padding(4);
-            this.richTextBoxExLpLosersBracket.Name = "richTextBoxExLpLosersBracket";
-            this.richTextBoxExLpLosersBracket.Size = new System.Drawing.Size(299, 131);
-            this.richTextBoxExLpLosersBracket.TabIndex = 13;
-            this.richTextBoxExLpLosersBracket.Text = "";
+            // textBoxBracketTypeWinners
+            //
+            this.textBoxBracketTypeWinners.Location = new System.Drawing.Point(17, 401);
+            this.textBoxBracketTypeWinners.Margin = new System.Windows.Forms.Padding(4);
+            this.textBoxBracketTypeWinners.Name = "textBoxBracketTypeWinners";
+            this.textBoxBracketTypeWinners.Size = new System.Drawing.Size(299, 22);
+            this.textBoxBracketTypeWinners.TabIndex = 13;
+            //
+            // textBoxBracketTypeFinals
+            //
+            this.textBoxBracketTypeFinals.Location = new System.Drawing.Point(636, 401);
+            this.textBoxBracketTypeFinals.Margin = new System.Windows.Forms.Padding(4);
+            this.textBoxBracketTypeFinals.Name = "textBoxBracketTypeFinals";
+            this.textBoxBracketTypeFinals.Size = new System.Drawing.Size(297, 22);
+            this.textBoxBracketTypeFinals.TabIndex = 13;
+            this.textBoxBracketTypeFinals.Text = "2U2L1D";
+            //
+            // textBoxBracketTypeLosers
+            //
+            this.textBoxBracketTypeLosers.Location = new System.Drawing.Point(327, 401);
+            this.textBoxBracketTypeLosers.Margin = new System.Windows.Forms.Padding(4);
+            this.textBoxBracketTypeLosers.Name = "textBoxBracketTypeLosers";
+            this.textBoxBracketTypeLosers.Size = new System.Drawing.Size(299, 22);
+            this.textBoxBracketTypeLosers.TabIndex = 13;
             // 
             // panel3
             // 
@@ -933,23 +715,11 @@
             this.label8.TabIndex = 37;
             this.label8.Text = "Event Page";
             //
-            // buttonReloadBracketConversions
-            //
-            this.buttonReloadBracketConversions.Location = new System.Drawing.Point(945, 440);
-            this.buttonReloadBracketConversions.Margin = new System.Windows.Forms.Padding(4);
-            this.buttonReloadBracketConversions.Name = "buttonReloadBracketConversions";
-            this.buttonReloadBracketConversions.Size = new System.Drawing.Size(306, 28);
-            this.buttonReloadBracketConversions.TabIndex = 38;
-            this.buttonReloadBracketConversions.Text = "Reload Bracket Conversions";
-            this.buttonReloadBracketConversions.UseVisualStyleBackColor = true;
-            this.buttonReloadBracketConversions.Click += new System.EventHandler(this.buttonReloadBracketConversions_Click);
-            //
             // FormMain
             //
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1264, 697);
-            this.Controls.Add(this.buttonReloadBracketConversions);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.numericUpDownEventPage);
             this.Controls.Add(this.panel3);
@@ -969,13 +739,13 @@
             this.Controls.Add(this.buttonAKA);
             this.Controls.Add(this.buttonGetTournament);
             this.Controls.Add(this.progressBar);
-            this.Controls.Add(this.checkBoxGuessFinal);
+            this.Controls.Add(this.checkBoxOutputFinal);
             this.Controls.Add(this.checkBoxLosers);
             this.Controls.Add(this.checkBoxWinners);
-            this.Controls.Add(this.richTextBoxExLpWinnersBracket);
-            this.Controls.Add(this.richTextBoxExLpFinalBracket);
+            this.Controls.Add(this.textBoxBracketTypeWinners);
+            this.Controls.Add(this.textBoxBracketTypeFinals);
             this.Controls.Add(this.checkBoxFillByes);
-            this.Controls.Add(this.richTextBoxExLpLosersBracket);
+            this.Controls.Add(this.textBoxBracketTypeLosers);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.richTextBoxLog);
             this.Controls.Add(this.richTextBoxLpOutput);
@@ -996,12 +766,6 @@
             this.tabPageTournamentExplorer.ResumeLayout(false);
             this.tabPageRetrievedData.ResumeLayout(false);
             this.tabPageRetrievedData.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownLosersEnd)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownLosersOffset)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownLosersStart)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownWinnersEnd)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownWinnersOffset)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownWinnersStart)).EndInit();
             this.panel3.ResumeLayout(false);
             this.panel3.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownEventPage)).EndInit();
@@ -1026,10 +790,10 @@
         private System.Windows.Forms.CheckBox checkBoxWinners;
         private System.Windows.Forms.CheckBox checkBoxLosers;
         private System.Windows.Forms.CheckBox checkBoxFillByes;
-        private RichTextBoxEx richTextBoxExLpLosersBracket;
-        private RichTextBoxEx richTextBoxExLpWinnersBracket;
+        private System.Windows.Forms.TextBox textBoxBracketTypeLosers;
+        private System.Windows.Forms.TextBox textBoxBracketTypeWinners;
         private System.Windows.Forms.ProgressBar progressBar;
-        private System.Windows.Forms.CheckBox checkBoxGuessFinal;
+        private System.Windows.Forms.CheckBox checkBoxOutputFinal;
         private System.Windows.Forms.NumericUpDown numericUpDownAdvanceLosers;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Button buttonPrizePool;
@@ -1045,7 +809,7 @@
         private System.Windows.Forms.Button buttonGroupTable;
         private System.Windows.Forms.RadioButton radioButtonRocketLeague;
         private System.Windows.Forms.Button buttonAuthentication;
-        private RichTextBoxEx richTextBoxExLpFinalBracket;
+        private System.Windows.Forms.TextBox textBoxBracketTypeFinals;
         private System.Windows.Forms.TextBox textBoxHeaderFinals;
         private System.Windows.Forms.TextBox textBoxHeaderLosers;
         private System.Windows.Forms.TextBox textBoxHeaderWinners;
@@ -1055,24 +819,8 @@
         private System.Windows.Forms.TabPage tabPageRetrievedData;
         private System.Windows.Forms.RichTextBox richTextBoxLosers;
         private System.Windows.Forms.RichTextBox richTextBoxWinners;
-        private System.Windows.Forms.Button buttonLoserShift;
-        private System.Windows.Forms.CheckBox checkBoxLockLosers;
-        private System.Windows.Forms.CheckBox checkBoxLockWinners;
-        private System.Windows.Forms.NumericUpDown numericUpDownLosersStart;
-        private System.Windows.Forms.Label label11;
-        private System.Windows.Forms.Button buttonWinnerShift;
-        private System.Windows.Forms.NumericUpDown numericUpDownLosersOffset;
-        private System.Windows.Forms.Label label12;
-        private System.Windows.Forms.Label label13;
-        private System.Windows.Forms.NumericUpDown numericUpDownLosersEnd;
-        private System.Windows.Forms.NumericUpDown numericUpDownWinnersStart;
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.Label label9;
-        private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.NumericUpDown numericUpDownWinnersOffset;
-        private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.NumericUpDown numericUpDownWinnersEnd;
         private System.Windows.Forms.TreeView treeView1;
         private System.Windows.Forms.Button buttonGetData;
         private System.Windows.Forms.Button buttonGetEvent;
@@ -1084,7 +832,6 @@
         private System.Windows.Forms.Button buttonCircuit;
         private System.Windows.Forms.NumericUpDown numericUpDownEventPage;
         private System.Windows.Forms.Label label8;
-        private System.Windows.Forms.Button buttonReloadBracketConversions;
     }
 }
 

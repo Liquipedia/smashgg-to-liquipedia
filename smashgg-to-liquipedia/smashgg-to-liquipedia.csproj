@@ -101,12 +101,6 @@ XCOPY "$(SolutionDir)smashgg-to-liquipedia\Stage Lists" "$(TargetDir)Stage Lists
     <Compile Update="Authentication.Designer.cs">
       <DependentUpon>Authentication.cs</DependentUpon>
     </Compile>
-    <Compile Update="FormMatchShift.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Update="FormMatchShift.Designer.cs">
-      <DependentUpon>FormMatchShift.cs</DependentUpon>
-    </Compile>
     <Compile Update="FormStrings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -134,9 +128,6 @@ XCOPY "$(SolutionDir)smashgg-to-liquipedia\Stage Lists" "$(TargetDir)Stage Lists
     <EmbeddedResource Update="Authentication.resx">
       <DependentUpon>Authentication.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="FormMatchShift.resx">
-      <DependentUpon>FormMatchShift.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Update="FormMain.resx">
       <DependentUpon>FormMain.cs</DependentUpon>
     </EmbeddedResource>
@@ -150,9 +141,6 @@ XCOPY "$(SolutionDir)smashgg-to-liquipedia\Stage Lists" "$(TargetDir)Stage Lists
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <None Include="BracketConversions.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Include="Flag List.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

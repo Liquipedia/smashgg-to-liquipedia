@@ -8,7 +8,8 @@
         public int? seedId { get; set; }
         public string prereqId { get; set; }
         public string prereqType { get; set; }
-        public int prereqPlacement { get; set; }
+        /// <summary>Placement in the prerequisite set that fills this slot: 1 = its winner, 2 = its loser</summary>
+        public int? prereqPlacement { get; set; }
         #endregion
     }
 }

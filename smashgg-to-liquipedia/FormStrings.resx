@@ -117,11 +117,14 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="CuetextLpFinals" xml:space="preserve">
+    <value>Final bracket type (e.g. 2U2L1D)</value>
+  </data>
   <data name="CuetextLpLosers" xml:space="preserve">
-    <value>Paste losers bracket here</value>
+    <value>Losers bracket type</value>
   </data>
   <data name="CuetextLpWinners" xml:space="preserve">
-    <value>Paste winners bracket here</value>
+    <value>Winners bracket type (e.g. 8-2Q)</value>
   </data>
   <data name="CuetextRegexFind" xml:space="preserve">
     <value>Regex find expression</value>

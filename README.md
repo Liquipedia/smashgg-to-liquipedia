@@ -46,9 +46,4 @@ Clicking **Prize Pool Table** will generate a prize pool table based on the retr
 
 **Get AKA DB** will retrieve tag information from Liquipedia. This will help standardize names and flags according to start.gg player ID numbers.
 
-The **Data** tab contains settings for advanced users.
-
-* **Start** and **End** indicates which rounds will be used from queried data. This should almost never be touched.
-* **Offset** will shift rounds left (if negative) and right (if positive) in to the destination Liquipedia template.
-* **Lock** will lock the start/end/offset fields between queries.
-* **Shift** allows you to move sets up and down in to the destination Liquipedia bracket
+The **Data** tab lists the entrants and sets retrieved from start.gg.
