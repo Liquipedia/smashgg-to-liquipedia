@@ -472,7 +472,7 @@ namespace smashgg_to_liquipedia
             // brackets then continue from the sets feeding it
             var parts = new[]
             {
-                new { enabled = checkBoxGuessFinal.Checked, bracketType = textBoxBracketTypeFinals.Text,
+                new { enabled = checkBoxOutputFinal.Checked, bracketType = textBoxBracketTypeFinals.Text,
                       header = textBoxHeaderFinals.Text, side = Match2BracketMapper.Side.Any },
                 new { enabled = checkBoxWinners.Checked, bracketType = textBoxBracketTypeWinners.Text,
                       header = textBoxHeaderWinners.Text, side = Match2BracketMapper.Side.Upper },
@@ -1742,7 +1742,7 @@ namespace smashgg_to_liquipedia
             numericUpDownEventPage.Enabled = false;
 
             checkBoxFillByes.Enabled = false;
-            checkBoxGuessFinal.Enabled = false;
+            checkBoxOutputFinal.Enabled = false;
             checkBoxLosers.Enabled = false;
             checkBoxWinners.Enabled = false;
             checkBoxMatchDetails.Enabled = false;
@@ -1794,7 +1794,7 @@ namespace smashgg_to_liquipedia
             numericUpDownEventPage.Enabled = true;
 
             checkBoxFillByes.Enabled = true;
-            checkBoxGuessFinal.Enabled = true;
+            checkBoxOutputFinal.Enabled = true;
             checkBoxLosers.Enabled = true;
             checkBoxWinners.Enabled = true;
             checkBoxMatchDetails.Enabled = true;

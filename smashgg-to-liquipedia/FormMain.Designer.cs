@@ -44,7 +44,7 @@
             this.checkBoxLosers = new System.Windows.Forms.CheckBox();
             this.checkBoxFillByes = new System.Windows.Forms.CheckBox();
             this.progressBar = new System.Windows.Forms.ProgressBar();
-            this.checkBoxGuessFinal = new System.Windows.Forms.CheckBox();
+            this.checkBoxOutputFinal = new System.Windows.Forms.CheckBox();
             this.numericUpDownAdvanceLosers = new System.Windows.Forms.NumericUpDown();
             this.label6 = new System.Windows.Forms.Label();
             this.buttonPrizePool = new System.Windows.Forms.Button();
@@ -255,16 +255,16 @@
             this.progressBar.Size = new System.Drawing.Size(300, 28);
             this.progressBar.TabIndex = 15;
             // 
-            // checkBoxGuessFinal
+            // checkBoxOutputFinal
             // 
-            this.checkBoxGuessFinal.AutoSize = true;
-            this.checkBoxGuessFinal.Location = new System.Drawing.Point(636, 341);
-            this.checkBoxGuessFinal.Margin = new System.Windows.Forms.Padding(4);
-            this.checkBoxGuessFinal.Name = "checkBoxGuessFinal";
-            this.checkBoxGuessFinal.Size = new System.Drawing.Size(107, 20);
-            this.checkBoxGuessFinal.TabIndex = 14;
-            this.checkBoxGuessFinal.Text = "Guess Finals";
-            this.checkBoxGuessFinal.UseVisualStyleBackColor = true;
+            this.checkBoxOutputFinal.AutoSize = true;
+            this.checkBoxOutputFinal.Location = new System.Drawing.Point(636, 341);
+            this.checkBoxOutputFinal.Margin = new System.Windows.Forms.Padding(4);
+            this.checkBoxOutputFinal.Name = "checkBoxOutputFinal";
+            this.checkBoxOutputFinal.Size = new System.Drawing.Size(107, 20);
+            this.checkBoxOutputFinal.TabIndex = 14;
+            this.checkBoxOutputFinal.Text = "Output Finals";
+            this.checkBoxOutputFinal.UseVisualStyleBackColor = true;
             // 
             // numericUpDownAdvanceLosers
             // 
@@ -739,7 +739,7 @@
             this.Controls.Add(this.buttonAKA);
             this.Controls.Add(this.buttonGetTournament);
             this.Controls.Add(this.progressBar);
-            this.Controls.Add(this.checkBoxGuessFinal);
+            this.Controls.Add(this.checkBoxOutputFinal);
             this.Controls.Add(this.checkBoxLosers);
             this.Controls.Add(this.checkBoxWinners);
             this.Controls.Add(this.textBoxBracketTypeWinners);
@@ -793,7 +793,7 @@
         private System.Windows.Forms.TextBox textBoxBracketTypeLosers;
         private System.Windows.Forms.TextBox textBoxBracketTypeWinners;
         private System.Windows.Forms.ProgressBar progressBar;
-        private System.Windows.Forms.CheckBox checkBoxGuessFinal;
+        private System.Windows.Forms.CheckBox checkBoxOutputFinal;
         private System.Windows.Forms.NumericUpDown numericUpDownAdvanceLosers;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Button buttonPrizePool;
