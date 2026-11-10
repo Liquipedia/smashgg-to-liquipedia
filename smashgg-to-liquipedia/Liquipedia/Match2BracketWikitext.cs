@@ -278,15 +278,27 @@ namespace smashgg_to_liquipedia.Liquipedia
         /// </summary>
         private bool ShouldSwapOpponents(Match2Bracket bracket, LpdbMatch2 templateMatch, Set set)
         {
+            // start.gg switches the slots of a bracket reset relative to the grand final, while the
+            // template's reset keeps the grand final's opponent order
+            if (IsBracketReset(bracket, templateMatch))
+            {
+                return true;
+            }
+
             // TODO: a match with a single linked feeder (e.g. a losers round fed by one losers match,
             // with the other opponent dropping from winners) puts that feeder on the side named by
             // toupper/tolower. Compare that side with the slot whose prereqId is the feeder's set, and
             // swap when they differ. Two-feeder matches are already aligned by the mapper.
-            //
-            // TODO: start.gg also switches the slots of a bracket reset relative to the grand final
-            // (see the legacy LpOutput reset handling); check whether the template's reset match
-            // expects the grand final's order.
             return false;
+        }
+
+        /// <summary>
+        /// Whether a template match is the bracket reset of another match in the same template
+        /// </summary>
+        private static bool IsBracketReset(Match2Bracket bracket, LpdbMatch2 templateMatch)
+        {
+            return bracket.TemplateMatches.Any(match => match.match2bracketdata != null
+                && match.match2bracketdata.bracketreset == templateMatch.match2id);
         }
 
         /// <summary>
