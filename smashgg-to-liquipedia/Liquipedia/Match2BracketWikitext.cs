@@ -40,6 +40,9 @@ namespace smashgg_to_liquipedia.Liquipedia
 
             /// <summary>Write "Bye" opponents for bye sets instead of leaving them empty</summary>
             public bool FillByes = false;
+
+            /// <summary>Use Fighters style output</summary>
+            public bool UseFightersStyle = false;
         }
 
         private const string INDENT = "    ";
@@ -364,9 +367,106 @@ namespace smashgg_to_liquipedia.Liquipedia
         /// </summary>
         private string ConvertGame(Set set, Game game, int opponent1Slot, int opponent2Slot)
         {
-            // TODO: {{Map}} parameters per wiki (characters, stage, winner, stocks/score).
-            // Names come from CharacterName(game.EntrantChar(entrantId)) and StageName(game.stage).
-            return "{{Map}}";
+            var gameWikicode = new StringBuilder("{{Map");
+            LoadMatchDetailDictionary();
+
+            // Insert character for player 1
+            string o1Character;
+            if (gameCharacterList.ContainsKey(game.EntrantChar(set.slots[opponent1Slot].entrant.id)))
+            {
+                o1Character = gameCharacterList[game.EntrantChar(set.slots[opponent1Slot].entrant.id)];
+            }
+            else if (game.EntrantChar(set.slots[opponent1Slot].entrant.id) == Consts.UNKNOWN || game.EntrantChar(set.slots[opponent1Slot].entrant.id) == 0)
+            {
+                o1Character = string.Empty;
+            }
+            else
+            {
+                o1Character = game.EntrantChar(set.slots[opponent1Slot].entrant.id).ToString();
+                // log += "No character entry for number: " + character + "\r\n";
+            }
+
+
+            // Insert character for player 2
+            string o2Character;
+            if (gameCharacterList.ContainsKey(game.EntrantChar(set.slots[opponent2Slot].entrant.id)))
+            {
+                o2Character = gameCharacterList[game.EntrantChar(set.slots[opponent2Slot].entrant.id)];
+            }
+            else if (game.EntrantChar(set.slots[opponent2Slot].entrant.id) == Consts.UNKNOWN || game.EntrantChar(set.slots[opponent2Slot].entrant.id) == 0)
+            {
+                o2Character = string.Empty;
+            }
+            else
+            {
+                o2Character = game.EntrantChar(set.slots[opponent2Slot].entrant.id).ToString();
+                // log += "No character entry for number: " + character + "\r\n";
+            }
+
+            if (options.UseFightersStyle)
+            {
+                gameWikicode.Append("|o1p1={{Chars|").Append(o1Character).Append("}}");
+                gameWikicode.Append("|o2p1={{Chars|").Append(o2Character).Append("}}");
+                gameWikicode.Append("|score1=");
+                gameWikicode.Append("|score2=");
+            }
+            else
+            {
+                // Temporary stock counts - only set 0 stocks for the loser
+                if (game.winnerId == set.slots[opponent1Slot].entrant.id)
+                {
+                    gameWikicode.Append("|o1c1={{Chars|").Append(o1Character).Append(",").Append("}}");
+                    gameWikicode.Append("|o2c1={{Chars|").Append(o2Character).Append(",0").Append("}}");
+                }
+                else if (game.winnerId == set.slots[opponent2Slot].entrant.id)
+                {
+                    gameWikicode.Append("|o1c1={{Chars|").Append(o1Character).Append(",0").Append("}}");
+                    gameWikicode.Append("|o2c1={{Chars|").Append(o2Character).Append(",").Append("}}");
+                }
+                else
+                {
+                    gameWikicode.Append("|o1c1={{Chars|").Append(o1Character).Append(",").Append("}}");
+                    gameWikicode.Append("|o2c1={{Chars|").Append(o2Character).Append(",").Append("}}");
+                }
+            }
+            gameWikicode.Append("|winner=");
+
+            if (game.winnerId == set.slots[opponent1Slot].entrant.id)
+            {
+                gameWikicode.Append("1");
+            }
+            else if (game.winnerId == set.slots[opponent2Slot].entrant.id)
+            {
+                gameWikicode.Append("2");
+            }
+
+            if (!options.UseFightersStyle)
+            {
+                string stage;
+                if (game.stage != null)
+                {
+                    if (gameStageList.ContainsKey(game.stage.id))
+                    {
+                        stage = gameStageList[game.stage.id];
+                    }
+                    else if (game.stage.id == Consts.UNKNOWN || game.stage.id == 0)
+                    {
+                        stage = string.Empty;
+                    }
+                    else
+                    {
+                        stage = game.stage.id.ToString();
+                        // log += "No stage entry for number: " + stage + "\r\n";
+                    }
+                }
+                else
+                {
+                    stage = "Unknown";
+                }
+                gameWikicode.Append("|map=").Append(stage);
+            }
+
+            return gameWikicode.Append("}}").ToString();
         }
 
         private static void AppendParameter(StringBuilder text, string name, string value)
