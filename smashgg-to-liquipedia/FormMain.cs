@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
@@ -40,6 +40,7 @@ namespace smashgg_to_liquipedia
         ApiQueries apiQuery;
 
         string authToken = string.Empty;
+        string lpdbApiKey = string.Empty;
 
         /// <summary>
         /// Cancelled when the form closes, to stop any in-flight requests
@@ -63,6 +64,13 @@ namespace smashgg_to_liquipedia
             {
                 StreamReader fileinfo = new StreamReader(@"userinfo");
                 authToken = fileinfo.ReadLine().Trim().Unprotect();
+
+                // Optional second line; absent in files saved by older versions
+                string lpdbApiKeyLine = fileinfo.ReadLine();
+                if (!string.IsNullOrWhiteSpace(lpdbApiKeyLine))
+                {
+                    lpdbApiKey = lpdbApiKeyLine.Trim().Unprotect();
+                }
                 fileinfo.Close();
 
                 if (authToken == "")
@@ -2183,10 +2191,11 @@ namespace smashgg_to_liquipedia
         #region Authentication
         private void buttonAuth_Click(object sender, EventArgs e)
         {
-            Authentication tokenWindow = new Authentication(ref authToken);
+            Authentication tokenWindow = new Authentication(authToken, lpdbApiKey);
             tokenWindow.ShowDialog();
 
             authToken = tokenWindow.token;
+            lpdbApiKey = tokenWindow.lpdbApiKey;
             if (authToken == "")
             {
                 buttonAuthentication.BackColor = Color.PaleVioletRed;
@@ -2221,13 +2230,14 @@ namespace smashgg_to_liquipedia
         {
             closingCts.Cancel();
 
-            if (authToken != string.Empty)
+            if (authToken != string.Empty || lpdbApiKey != string.Empty)
             {
                 try
                 {
                     //Save credentials
                     StreamWriter userinfo = new StreamWriter(@"userinfo");
                     userinfo.WriteLine(authToken.Protect());
+                    userinfo.WriteLine(lpdbApiKey.Protect());
 
                     userinfo.Close();
                 }
