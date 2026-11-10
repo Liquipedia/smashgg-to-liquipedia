@@ -50,6 +50,32 @@ namespace smashgg_to_liquipedia.Liquipedia
 
         private const string INDENT = "    ";
 
+        #region Bracket ids
+        private const string ALPHANUMERICS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        private static readonly Random Random = new Random();
+        private static readonly ISet<string> BracketIds = new HashSet<string>();
+
+        /// <summary>
+        /// Generates a random 10 character bracket id that is unique within this session
+        /// </summary>
+        private static string GenerateBracketId()
+        {
+            while (true)
+            {
+                var chars = new char[10];
+                for (int i = 0; i < chars.Length; i++)
+                {
+                    chars[i] = ALPHANUMERICS[Random.Next(ALPHANUMERICS.Length)];
+                }
+                var bracketId = new string(chars);
+                if (BracketIds.Add(bracketId))
+                {
+                    return bracketId;
+                }
+            }
+        }
+        #endregion
+
         private readonly Event selectedEvent;
         private readonly Dictionary<int, Entrant> entrants;
         private readonly Options options;
@@ -217,7 +243,7 @@ namespace smashgg_to_liquipedia.Liquipedia
             }
 
             text.Append("{{Bracket|").Append(bracket.BracketType)
-                .Append("|id=").Append(BracketConversion.GenerateBracketId());
+                .Append("|id=").Append(GenerateBracketId());
 
             // Every template match is written, so empty matches stay editable on the wiki
             foreach (LpdbMatch2 templateMatch in bracket.TemplateMatches)

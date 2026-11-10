@@ -23,14 +23,11 @@ namespace smashgg_to_liquipedia
 
         private static HttpClient httpClient;
 
-        public enum BracketSide { Winners, Losers }
-
         List<Seed> seedList = new List<Seed>();
         Dictionary<int, Entrant> entrantList = new Dictionary<int, Entrant>();
         List<Set> setList = new List<Set>();
         //List<Standing> groupStandings = new List<Standing>();
         Dictionary<int, List<Set>> roundList = new Dictionary<int, List<Set>>();
-        Dictionary<int, int> matchOffsetPerRound = new Dictionary<int, int>();
 
         Tournament tournament;
         Event selectedEvent;
@@ -735,38 +732,6 @@ namespace smashgg_to_liquipedia
             richTextBoxLog.Text += lpout.Log;
         }
 
-        /// <summary>
-        /// Opens a window that allows the user to shift matches
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void buttonWinnerShift_Click(object sender, EventArgs e)
-        {
-            if ((int)numericUpDownWinnersStart.Value > (int)numericUpDownWinnersEnd.Value) return;
-            if ((int)numericUpDownWinnersStart.Value == 0 && (int)numericUpDownWinnersEnd.Value == 0) return;
-
-            FormMatchShift shiftWindow = new FormMatchShift((int)numericUpDownWinnersStart.Value, (int)numericUpDownWinnersEnd.Value, BracketSide.Winners, ref matchOffsetPerRound);
-            LockControls();
-            shiftWindow.ShowDialog();
-            UnlockControls();
-        }
-
-        /// <summary>
-        /// Opens a window that allows the user to shift matches
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void buttonloserShift_Click(object sender, EventArgs e)
-        {
-            if ((int)numericUpDownLosersStart.Value > (int)numericUpDownLosersEnd.Value) return;
-            if ((int)numericUpDownLosersStart.Value == 0 && (int)numericUpDownLosersEnd.Value == 0) return;
-
-            FormMatchShift shiftWindow = new FormMatchShift((int)numericUpDownLosersStart.Value, (int)numericUpDownLosersEnd.Value, BracketSide.Losers, ref matchOffsetPerRound);
-            LockControls();
-            shiftWindow.ShowDialog();
-            UnlockControls();
-        }
-
         private static async Task<string> GetAkaFromWiki(PlayerDatabase.DbSource source, CancellationToken cancellationToken)
         {
             if (httpClient == null)
@@ -980,7 +945,7 @@ namespace smashgg_to_liquipedia
                 }
             }
 
-            UpdateNumericUpDownControls(eventType);
+            UpdateOutputSideCheckboxes();
 
             int entrantPadding = 0;
             int wPadding = 0;
@@ -1077,12 +1042,6 @@ namespace smashgg_to_liquipedia
                         outputSetToTextBox(ref richTextBoxLosers, set, lPadding);
                     }
                 }
-            }
-
-            // Generate default offsets of 0 for each round
-            for (int i = 0; i < roundList.Count; i++)
-            {
-                matchOffsetPerRound.Add(roundList.ElementAt(i).Key, 0);
             }
         }
 
@@ -1708,39 +1667,6 @@ namespace smashgg_to_liquipedia
 
         #region Form methods
         /// <summary>
-        /// Lock numericUpDown controls when the checkbox is checked
-        /// </summary>
-        /// <param name="sender">Checkbox</param>
-        /// <param name="e"></param>
-        private void checkBoxLock_CheckedChanged(object sender, EventArgs e)
-        {
-            if (checkBoxLockWinners.Checked)
-            {
-                numericUpDownWinnersStart.Enabled = false;
-                numericUpDownWinnersEnd.Enabled = false;
-                numericUpDownWinnersOffset.Enabled = false;
-            }
-            else
-            {
-                numericUpDownWinnersStart.Enabled = true;
-                numericUpDownWinnersEnd.Enabled = true;
-                numericUpDownWinnersOffset.Enabled = true;
-            }
-            if (checkBoxLockLosers.Checked)
-            {
-                numericUpDownLosersStart.Enabled = false;
-                numericUpDownLosersEnd.Enabled = false;
-                numericUpDownLosersOffset.Enabled = false;
-            }
-            else
-            {
-                numericUpDownLosersStart.Enabled = true;
-                numericUpDownLosersEnd.Enabled = true;
-                numericUpDownLosersOffset.Enabled = true;
-            }
-        }
-
-        /// <summary>
         /// Clear all textboxes, entrantList, setList, and roundList. tournamentStructure, tournament, and phaseList are untouched.
         /// </summary>
         private void ClearData()
@@ -1752,7 +1678,6 @@ namespace smashgg_to_liquipedia
             setList.Clear();
             seedList.Clear();
             roundList.Clear();
-            matchOffsetPerRound.Clear();
         }
 
         private void ClearLog()
@@ -1761,97 +1686,17 @@ namespace smashgg_to_liquipedia
         }
 
         /// <summary>
-        /// Update the numericUpDown controls
+        /// Turns on winners/losers bracket output when the retrieved bracket has sets on that side
         /// </summary>
-        private void UpdateNumericUpDownControls(Event.EventType eventType)
+        private void UpdateOutputSideCheckboxes()
         {
-            // Clear winners side numericUpDown controls unless it's locked
-            if (!checkBoxLockWinners.Checked)
+            if (roundList.Keys.Any(round => round > 0))
             {
-                numericUpDownWinnersStart.Value = 0;
-                numericUpDownWinnersEnd.Value = 0;
-                numericUpDownWinnersOffset.Value = 0;
+                checkBoxWinners.Checked = true;
             }
-
-            // Clear losers side numericUpDown controls unless it's locked
-            if (!checkBoxLockLosers.Checked)
+            if (roundList.Keys.Any(round => round < 0))
             {
-                numericUpDownLosersStart.Value = 0;
-                numericUpDownLosersEnd.Value = 0;
-                numericUpDownLosersOffset.Value = 0;
-            }
-
-            // Set values in form controls
-            foreach (int displayRound in roundList.Keys.ToList<int>())
-            {
-                int round = Math.Abs(displayRound);
-
-                if (displayRound > 0)
-                {
-                    if (eventType == Event.EventType.Singles)
-                    {
-                        checkBoxWinners.Checked = true;
-                    }
-                    else
-                    {
-                        checkBoxWinners.Checked = true;
-                    }
-
-                    if (checkBoxLockWinners.Checked) continue;
-
-                    // Remember lowest round number
-                    if (numericUpDownWinnersStart.Value == 0)
-                    {
-                        numericUpDownWinnersStart.Value = round;
-                    }
-                    else if (round < numericUpDownWinnersStart.Value)
-                    {
-                        numericUpDownWinnersStart.Value = round;
-                    }
-
-                    // Remember highest round number
-                    if (numericUpDownWinnersEnd.Value == 0)
-                    {
-                        numericUpDownWinnersEnd.Value = round;
-                    }
-                    else if (round > numericUpDownWinnersEnd.Value)
-                    {
-                        numericUpDownWinnersEnd.Value = round;
-                    }
-                }
-                else if (displayRound < 0)
-                {
-                    if (eventType == Event.EventType.Singles)
-                    {
-                        checkBoxLosers.Checked = true;
-                    }
-                    else
-                    {
-                        checkBoxLosers.Checked = true;
-                    }
-
-                    if (checkBoxLockLosers.Checked) continue;
-
-                    // Remember lowest round number
-                    if (numericUpDownLosersStart.Value == 0)
-                    {
-                        numericUpDownLosersStart.Value = round;
-                    }
-                    else if (round < numericUpDownLosersStart.Value)
-                    {
-                        numericUpDownLosersStart.Value = round;
-                    }
-
-                    // Remember highest round number
-                    if (numericUpDownLosersEnd.Value == 0)
-                    {
-                        numericUpDownLosersEnd.Value = round;
-                    }
-                    else if (round > numericUpDownLosersEnd.Value)
-                    {
-                        numericUpDownLosersEnd.Value = round;
-                    }
-                }
+                checkBoxLosers.Checked = true;
             }
         }
 
@@ -1880,8 +1725,6 @@ namespace smashgg_to_liquipedia
             buttonFill.Enabled = false;
             buttonGetTournament.Enabled = false;
             buttonPrizePool.Enabled = false;
-            buttonWinnerShift.Enabled = false;
-            buttonLoserShift.Enabled = false;
             buttonGroupTable.Enabled = false;
             buttonGetEvent.Enabled = false;
             buttonGetData.Enabled = false;
@@ -1889,7 +1732,6 @@ namespace smashgg_to_liquipedia
             buttonAKA.Enabled = false;
             buttonAkaList.Enabled = false;
             buttonAuthentication.Enabled = false;
-            buttonReloadBracketConversions.Enabled = false;
             treeView1.Enabled = false;
             radioButtonSmash.Enabled = false;
             radioButtonFighters.Enabled = false;
@@ -1901,8 +1743,6 @@ namespace smashgg_to_liquipedia
 
             checkBoxFillByes.Enabled = false;
             checkBoxGuessFinal.Enabled = false;
-            checkBoxLockLosers.Enabled = false;
-            checkBoxLockWinners.Enabled = false;
             checkBoxLosers.Enabled = false;
             checkBoxWinners.Enabled = false;
             checkBoxMatchDetails.Enabled = false;
@@ -1912,12 +1752,6 @@ namespace smashgg_to_liquipedia
             numericUpDownAdvanceWinners.Enabled = false;
             numericUpDownAdvanceLosers.Enabled = false;
             numericUpDownAdvanceLosers.Enabled = false;
-            numericUpDownLosersEnd.Enabled = false;
-            numericUpDownLosersOffset.Enabled = false;
-            numericUpDownLosersStart.Enabled = false;
-            numericUpDownWinnersEnd.Enabled = false;
-            numericUpDownWinnersOffset.Enabled = false;
-            numericUpDownWinnersStart.Enabled = false;
             numericUpDownPrizePool.Enabled = false;
 
             richTextBoxEntrants.Enabled = false;
@@ -1943,8 +1777,6 @@ namespace smashgg_to_liquipedia
             buttonFill.Enabled = true;
             buttonGetTournament.Enabled = true;
             buttonPrizePool.Enabled = true;
-            buttonWinnerShift.Enabled = true;
-            buttonLoserShift.Enabled = true;
             buttonGroupTable.Enabled = true;
             buttonGetEvent.Enabled = true;
             buttonGetData.Enabled = true;
@@ -1952,7 +1784,6 @@ namespace smashgg_to_liquipedia
             buttonAKA.Enabled = true;
             buttonAkaList.Enabled = true;
             buttonAuthentication.Enabled = true;
-            buttonReloadBracketConversions.Enabled = true;
             treeView1.Enabled = true;
             radioButtonSmash.Enabled = true;
             radioButtonFighters.Enabled = true;
@@ -1964,8 +1795,6 @@ namespace smashgg_to_liquipedia
 
             checkBoxFillByes.Enabled = true;
             checkBoxGuessFinal.Enabled = true;
-            checkBoxLockLosers.Enabled = true;
-            checkBoxLockWinners.Enabled = true;
             checkBoxLosers.Enabled = true;
             checkBoxWinners.Enabled = true;
             checkBoxMatchDetails.Enabled = true;
@@ -1975,12 +1804,6 @@ namespace smashgg_to_liquipedia
             numericUpDownAdvanceWinners.Enabled = true;
             numericUpDownAdvanceLosers.Enabled = true;
             numericUpDownAdvanceLosers.Enabled = true;
-            numericUpDownLosersEnd.Enabled = true;
-            numericUpDownLosersOffset.Enabled = true;
-            numericUpDownLosersStart.Enabled = true;
-            numericUpDownWinnersEnd.Enabled = true;
-            numericUpDownWinnersOffset.Enabled = true;
-            numericUpDownWinnersStart.Enabled = true;
             numericUpDownPrizePool.Enabled = true;
 
             richTextBoxEntrants.Enabled = true;
@@ -1994,9 +1817,6 @@ namespace smashgg_to_liquipedia
             textBoxHeaderLosers.Enabled = true;
             textBoxHeaderFinals.Enabled = true;
             richTextBoxLpOutput.Enabled = true;
-
-            // Re-lock numericUpDown controls if needed
-            checkBoxLock_CheckedChanged(new object(), new EventArgs());
         }
         #endregion
 
@@ -2080,24 +1900,6 @@ namespace smashgg_to_liquipedia
 
             apiQuery.SetToken(authToken);
             lpdbQuery.SetToken(lpdbApiKey);
-        }
-
-        /// <summary>
-        /// Rereads BracketConversions.json so edits take effect without restarting
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void buttonReloadBracketConversions_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                BracketConversion.Instance.Reload();
-                richTextBoxLog.Text += "Reloaded bracket conversions\r\n";
-            }
-            catch (Exception ex) when (ex is System.Text.Json.JsonException || ex is IOException || ex is UnauthorizedAccessException)
-            {
-                richTextBoxLog.Text += "Failed to reload bracket conversions: " + ex.Message + "\r\n";
-            }
         }
 
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
