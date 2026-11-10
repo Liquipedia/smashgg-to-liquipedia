@@ -15,15 +15,15 @@ namespace smashgg_to_liquipedia
 {
     class LpdbBracketQuery
     {
-        private string token;
+        private string apiKey;
         private readonly IFormMain form;
         private readonly HttpClient httpClient;
         static string Version => Application.ProductVersion;
 
-        public LpdbBracketQuery(string token, IFormMain form)
+        public LpdbBracketQuery(string apiKey, IFormMain form)
         {
             this.form = form;
-            this.token = token;
+            this.apiKey = apiKey;
 
             httpClient = new HttpClient(
                 new HttpClientHandler
@@ -36,13 +36,13 @@ namespace smashgg_to_liquipedia
             };
             httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("smashgg-to-liquipedia", $"{Version}"));
             httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("(https://github.com/Liquipedia/smashgg-to-liquipedia)"));
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Apikey", token);
+            SetApiKey(apiKey);
         }
 
-        public void SetToken(string token)
+        public void SetApiKey(string apiKey)
         {
-            this.token = token;
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Apikey", token);
+            this.apiKey = apiKey;
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Apikey", apiKey);
         }
 
         /// <summary>
@@ -81,7 +81,7 @@ namespace smashgg_to_liquipedia
                 return cached;
             }
 
-            if (string.IsNullOrWhiteSpace(token))
+            if (string.IsNullOrWhiteSpace(apiKey))
             {
                 throw new LpdbException("Set your LiquipediaDB API key first.");
             }

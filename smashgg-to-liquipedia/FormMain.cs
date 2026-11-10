@@ -538,7 +538,7 @@ namespace smashgg_to_liquipedia
             List<LpdbMatch2> template;
             try
             {
-                lpdbQuery.SetToken(lpdbApiKey);
+                lpdbQuery.SetApiKey(lpdbApiKey);
                 template = await lpdbQuery.GetBracketAsync(bracketType, cancellationToken);
             }
             catch (Exception ex) when (ex is LpdbException || ex is HttpRequestException
@@ -1899,7 +1899,7 @@ namespace smashgg_to_liquipedia
             }
 
             apiQuery.SetToken(authToken);
-            lpdbQuery.SetToken(lpdbApiKey);
+            lpdbQuery.SetApiKey(lpdbApiKey);
         }
 
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
