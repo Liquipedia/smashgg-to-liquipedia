@@ -1,6 +1,9 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using smashgg_to_liquipedia.Smashgg.Schema;
 
 namespace smashgg_to_liquipedia.Liquipedia
@@ -29,8 +32,6 @@ namespace smashgg_to_liquipedia.Liquipedia
 
         public class Options
         {
-            public OpponentType OpponentType = OpponentType.Solo;
-
             /// <summary>Write scores and winners of sets that are not completed yet</summary>
             public bool IncludeUnfinished = false;
 
@@ -43,15 +44,152 @@ namespace smashgg_to_liquipedia.Liquipedia
 
         private const string INDENT = "    ";
 
+        private readonly Event selectedEvent;
         private readonly Dictionary<int, Entrant> entrants;
         private readonly Options options;
 
+        /// <param name="selectedEvent">The start.gg event the brackets belong to</param>
         /// <param name="entrants">Event entrants keyed by entrant id</param>
-        public Match2BracketWikitext(Dictionary<int, Entrant> entrants, Options options)
+        public Match2BracketWikitext(Event selectedEvent, Dictionary<int, Entrant> entrants, Options options)
         {
+            this.selectedEvent = selectedEvent;
             this.entrants = entrants;
             this.options = options;
         }
+
+        /// <summary>
+        /// The event the brackets belong to
+        /// </summary>
+        public Event Event
+        {
+            get { return selectedEvent; }
+        }
+
+        /// <summary>
+        /// start.gg id of the event's game, which keys the character and stage lists; 0 if unknown
+        /// </summary>
+        public int VideogameId
+        {
+            get { return selectedEvent?.videogame?.id ?? 0; }
+        }
+
+        /// <summary>
+        /// Opponent template written for each slot, from the event's entrant size
+        /// </summary>
+        public OpponentType Opponents
+        {
+            get
+            {
+                if (selectedEvent != null
+                    && (selectedEvent.Type == Event.EventType.Doubles || selectedEvent.teamRosterSize?.maxPlayers == 2))
+                {
+                    return OpponentType.Duo;
+                }
+                return OpponentType.Solo;
+            }
+        }
+
+        /// <summary>
+        /// Problems found while converting, such as ids missing from the character and stage lists
+        /// </summary>
+        public string Log
+        {
+            get { return log.ToString(); }
+        }
+
+        #region Match detail dictionaries
+        private readonly StringBuilder log = new StringBuilder();
+        private bool loadedMatchDetailDictionary = false;
+        private Dictionary<int, string> gameCharacterList = new Dictionary<int, string>();
+        private Dictionary<int, string> gameStageList = new Dictionary<int, string>();
+
+        /// <summary>
+        /// Loads the character and stage lists of the event's game on first use
+        /// </summary>
+        private void LoadMatchDetailDictionary()
+        {
+            if (loadedMatchDetailDictionary)
+            {
+                return;
+            }
+            gameCharacterList = LoadDictionaryFromJson(VideogameId, "Character");
+            gameStageList = LoadDictionaryFromJson(VideogameId, "Stage");
+            loadedMatchDetailDictionary = true;
+        }
+
+        /// <summary>
+        /// Reads a JSON file mapping start.gg ids to names, e.g. "Character Lists/Character List 1.json"
+        /// </summary>
+        /// <param name="gameId">start.gg id of the game</param>
+        /// <param name="datatype">"Character" or "Stage"</param>
+        /// <returns>The mapping, or an empty one if the file is missing or unreadable</returns>
+        private Dictionary<int, string> LoadDictionaryFromJson(int gameId, string datatype)
+        {
+            string filename = Path.Combine(datatype + " Lists", datatype + " List " + gameId + ".json");
+
+            if (!File.Exists(filename))
+            {
+                log.Append("Couldn't find JSON file: ").Append(filename).Append("\r\n");
+                return new Dictionary<int, string>();
+            }
+
+            try
+            {
+                using (FileStream file = File.OpenRead(filename))
+                {
+                    return JsonSerializer.Deserialize<Dictionary<int, string>>(file) ?? new Dictionary<int, string>();
+                }
+            }
+            catch (Exception ex) when (ex is JsonException || ex is IOException || ex is UnauthorizedAccessException)
+            {
+                log.Append("Couldn't parse ").Append(datatype).Append(" JSON file ").Append(filename)
+                    .Append(": ").Append(ex.Message).Append("\r\n");
+                return new Dictionary<int, string>();
+            }
+        }
+
+        /// <summary>
+        /// Name of a start.gg character id: the list entry, empty if none was reported,
+        /// or the id itself if it is missing from the list
+        /// </summary>
+        private string CharacterName(int characterId)
+        {
+            LoadMatchDetailDictionary();
+            if (gameCharacterList.TryGetValue(characterId, out string name))
+            {
+                return name;
+            }
+            if (characterId == Consts.UNKNOWN || characterId == 0)
+            {
+                return string.Empty;
+            }
+            log.Append("No character entry for number: ").Append(characterId).Append("\r\n");
+            return characterId.ToString();
+        }
+
+        /// <summary>
+        /// Name of a game's stage: the list entry, empty if none was reported, "Unknown" if the game
+        /// has no stage data, or the id itself if it is missing from the list
+        /// </summary>
+        private string StageName(Stage stage)
+        {
+            LoadMatchDetailDictionary();
+            if (stage == null)
+            {
+                return "Unknown";
+            }
+            if (gameStageList.TryGetValue(stage.id, out string name))
+            {
+                return name;
+            }
+            if (stage.id == Consts.UNKNOWN || stage.id == 0)
+            {
+                return string.Empty;
+            }
+            log.Append("No stage entry for number: ").Append(stage.id).Append("\r\n");
+            return stage.id.ToString();
+        }
+        #endregion
 
         /// <summary>
         /// Converts brackets in order, each under its header
@@ -163,7 +301,7 @@ namespace smashgg_to_liquipedia.Liquipedia
 
             string score = showResult ? ConvertScore(set, slotIndex) : string.Empty;
 
-            switch (options.OpponentType)
+            switch (Opponents)
             {
                 case OpponentType.Duo:
                     // TODO: verify the duo opponent template name and parameters on the wiki
@@ -227,8 +365,8 @@ namespace smashgg_to_liquipedia.Liquipedia
         /// </summary>
         private string ConvertGame(Set set, Game game, int opponent1Slot, int opponent2Slot)
         {
-            // TODO: {{Map}} parameters per wiki (characters, stage, winner, stocks/score);
-            // the character and stage id lists are loaded in LpOutput.LoadDictionaryFromJson
+            // TODO: {{Map}} parameters per wiki (characters, stage, winner, stocks/score).
+            // Names come from CharacterName(game.EntrantChar(entrantId)) and StageName(game.stage).
             return "{{Map}}";
         }
 
