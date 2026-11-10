@@ -94,9 +94,9 @@
             this.buttonGetEvent = new System.Windows.Forms.Button();
             this.buttonReloadBracketConversions = new System.Windows.Forms.Button();
             this.checkBoxSorting = new System.Windows.Forms.CheckBox();
-            this.richTextBoxExLpWinnersBracket = new RichTextBoxEx();
-            this.richTextBoxExLpFinalBracket = new RichTextBoxEx();
-            this.richTextBoxExLpLosersBracket = new RichTextBoxEx();
+            this.textBoxBracketTypeWinners = new System.Windows.Forms.TextBox();
+            this.textBoxBracketTypeFinals = new System.Windows.Forms.TextBox();
+            this.textBoxBracketTypeLosers = new System.Windows.Forms.TextBox();
             this.panel3 = new System.Windows.Forms.Panel();
             this.radioButton4DE4S = new System.Windows.Forms.RadioButton();
             this.radioButtonDEFinal = new System.Windows.Forms.RadioButton();
@@ -843,35 +843,30 @@
             this.checkBoxSorting.Text = "Sort sets";
             this.checkBoxSorting.UseVisualStyleBackColor = true;
             // 
-            // richTextBoxExLpWinnersBracket
-            // 
-            this.richTextBoxExLpWinnersBracket.Cue = null;
-            this.richTextBoxExLpWinnersBracket.Location = new System.Drawing.Point(17, 401);
-            this.richTextBoxExLpWinnersBracket.Margin = new System.Windows.Forms.Padding(4);
-            this.richTextBoxExLpWinnersBracket.Name = "richTextBoxExLpWinnersBracket";
-            this.richTextBoxExLpWinnersBracket.Size = new System.Drawing.Size(299, 130);
-            this.richTextBoxExLpWinnersBracket.TabIndex = 13;
-            this.richTextBoxExLpWinnersBracket.Text = "";
-            // 
-            // richTextBoxExLpFinalBracket
-            // 
-            this.richTextBoxExLpFinalBracket.Cue = null;
-            this.richTextBoxExLpFinalBracket.Location = new System.Drawing.Point(636, 401);
-            this.richTextBoxExLpFinalBracket.Margin = new System.Windows.Forms.Padding(4);
-            this.richTextBoxExLpFinalBracket.Name = "richTextBoxExLpFinalBracket";
-            this.richTextBoxExLpFinalBracket.Size = new System.Drawing.Size(297, 131);
-            this.richTextBoxExLpFinalBracket.TabIndex = 13;
-            this.richTextBoxExLpFinalBracket.Text = resources.GetString("richTextBoxExLpFinalBracket.Text");
-            // 
-            // richTextBoxExLpLosersBracket
-            // 
-            this.richTextBoxExLpLosersBracket.Cue = null;
-            this.richTextBoxExLpLosersBracket.Location = new System.Drawing.Point(327, 401);
-            this.richTextBoxExLpLosersBracket.Margin = new System.Windows.Forms.Padding(4);
-            this.richTextBoxExLpLosersBracket.Name = "richTextBoxExLpLosersBracket";
-            this.richTextBoxExLpLosersBracket.Size = new System.Drawing.Size(299, 131);
-            this.richTextBoxExLpLosersBracket.TabIndex = 13;
-            this.richTextBoxExLpLosersBracket.Text = "";
+            // textBoxBracketTypeWinners
+            //
+            this.textBoxBracketTypeWinners.Location = new System.Drawing.Point(17, 401);
+            this.textBoxBracketTypeWinners.Margin = new System.Windows.Forms.Padding(4);
+            this.textBoxBracketTypeWinners.Name = "textBoxBracketTypeWinners";
+            this.textBoxBracketTypeWinners.Size = new System.Drawing.Size(299, 22);
+            this.textBoxBracketTypeWinners.TabIndex = 13;
+            //
+            // textBoxBracketTypeFinals
+            //
+            this.textBoxBracketTypeFinals.Location = new System.Drawing.Point(636, 401);
+            this.textBoxBracketTypeFinals.Margin = new System.Windows.Forms.Padding(4);
+            this.textBoxBracketTypeFinals.Name = "textBoxBracketTypeFinals";
+            this.textBoxBracketTypeFinals.Size = new System.Drawing.Size(297, 22);
+            this.textBoxBracketTypeFinals.TabIndex = 13;
+            this.textBoxBracketTypeFinals.Text = "2U2L1D";
+            //
+            // textBoxBracketTypeLosers
+            //
+            this.textBoxBracketTypeLosers.Location = new System.Drawing.Point(327, 401);
+            this.textBoxBracketTypeLosers.Margin = new System.Windows.Forms.Padding(4);
+            this.textBoxBracketTypeLosers.Name = "textBoxBracketTypeLosers";
+            this.textBoxBracketTypeLosers.Size = new System.Drawing.Size(299, 22);
+            this.textBoxBracketTypeLosers.TabIndex = 13;
             // 
             // panel3
             // 
@@ -972,10 +967,10 @@
             this.Controls.Add(this.checkBoxGuessFinal);
             this.Controls.Add(this.checkBoxLosers);
             this.Controls.Add(this.checkBoxWinners);
-            this.Controls.Add(this.richTextBoxExLpWinnersBracket);
-            this.Controls.Add(this.richTextBoxExLpFinalBracket);
+            this.Controls.Add(this.textBoxBracketTypeWinners);
+            this.Controls.Add(this.textBoxBracketTypeFinals);
             this.Controls.Add(this.checkBoxFillByes);
-            this.Controls.Add(this.richTextBoxExLpLosersBracket);
+            this.Controls.Add(this.textBoxBracketTypeLosers);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.richTextBoxLog);
             this.Controls.Add(this.richTextBoxLpOutput);
@@ -1026,8 +1021,8 @@
         private System.Windows.Forms.CheckBox checkBoxWinners;
         private System.Windows.Forms.CheckBox checkBoxLosers;
         private System.Windows.Forms.CheckBox checkBoxFillByes;
-        private RichTextBoxEx richTextBoxExLpLosersBracket;
-        private RichTextBoxEx richTextBoxExLpWinnersBracket;
+        private System.Windows.Forms.TextBox textBoxBracketTypeLosers;
+        private System.Windows.Forms.TextBox textBoxBracketTypeWinners;
         private System.Windows.Forms.ProgressBar progressBar;
         private System.Windows.Forms.CheckBox checkBoxGuessFinal;
         private System.Windows.Forms.NumericUpDown numericUpDownAdvanceLosers;
@@ -1045,7 +1040,7 @@
         private System.Windows.Forms.Button buttonGroupTable;
         private System.Windows.Forms.RadioButton radioButtonRocketLeague;
         private System.Windows.Forms.Button buttonAuthentication;
-        private RichTextBoxEx richTextBoxExLpFinalBracket;
+        private System.Windows.Forms.TextBox textBoxBracketTypeFinals;
         private System.Windows.Forms.TextBox textBoxHeaderFinals;
         private System.Windows.Forms.TextBox textBoxHeaderLosers;
         private System.Windows.Forms.TextBox textBoxHeaderWinners;

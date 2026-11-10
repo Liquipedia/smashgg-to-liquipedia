@@ -87,7 +87,10 @@ namespace smashgg_to_liquipedia
             return doublesWikiCode;
         }
 
-        private static string GenerateBracketId()
+        /// <summary>
+        /// Generates a random bracket id that is unique within this session
+        /// </summary>
+        internal static string GenerateBracketId()
         {
             var chars = new char[10];
             for (int i = 0; i < 10; i++)

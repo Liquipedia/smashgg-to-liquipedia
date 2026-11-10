@@ -61,16 +61,25 @@ namespace smashgg_to_liquipedia {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Paste losers bracket here.
+        ///   Looks up a localized string similar to Final bracket type (e.g. 2U2L1D).
+        /// </summary>
+        internal static string CuetextLpFinals {
+            get {
+                return ResourceManager.GetString("CuetextLpFinals", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Losers bracket type.
         /// </summary>
         internal static string CuetextLpLosers {
             get {
                 return ResourceManager.GetString("CuetextLpLosers", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   Looks up a localized string similar to Paste winners bracket here.
+        ///   Looks up a localized string similar to Winners bracket type (e.g. 8-2Q).
         /// </summary>
         internal static string CuetextLpWinners {
             get {

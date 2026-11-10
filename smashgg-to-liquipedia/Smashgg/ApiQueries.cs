@@ -478,6 +478,9 @@ namespace smashgg_to_liquipedia
                                 wPlacement
                                 state
                                 slots {
+                                    prereqId
+                                    prereqType
+                                    prereqPlacement
                                     entrant{
                                         id
                                     }
@@ -505,6 +508,9 @@ namespace smashgg_to_liquipedia
                                 wPlacement
                                 state
                                 slots {
+                                    prereqId
+                                    prereqType
+                                    prereqPlacement
                                     entrant{
                                         id
                                     }
@@ -533,6 +539,9 @@ namespace smashgg_to_liquipedia
                                 wPlacement
                                 lPlacement
                                 slots {
+                                    prereqId
+                                    prereqType
+                                    prereqPlacement
                                     slotIndex
                                     entrant{
                                         id

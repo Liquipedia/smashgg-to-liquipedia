@@ -13,6 +13,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using smashgg_to_liquipedia.Smashgg.Schema;
 using smashgg_to_liquipedia.Smashgg;
+using smashgg_to_liquipedia.Liquipedia;
 
 namespace smashgg_to_liquipedia
 {
@@ -38,6 +39,12 @@ namespace smashgg_to_liquipedia
 
         PlayerDatabase playerdb;
         ApiQueries apiQuery;
+        LpdbBracketQuery lpdbQuery;
+
+        /// <summary>
+        /// Brackets built by the last fill, in final/winners/losers order
+        /// </summary>
+        List<Match2Bracket> match2Brackets = new List<Match2Bracket>();
 
         string authToken = string.Empty;
         string lpdbApiKey = string.Empty;
@@ -86,8 +93,9 @@ namespace smashgg_to_liquipedia
 
             SetCueText(textBoxTournamentUrl, FormStrings.CuetextURL);
 
-            richTextBoxExLpWinnersBracket.Cue = FormStrings.CuetextLpWinners;
-            richTextBoxExLpLosersBracket.Cue = FormStrings.CuetextLpLosers;
+            SetCueText(textBoxBracketTypeWinners, FormStrings.CuetextLpWinners);
+            SetCueText(textBoxBracketTypeLosers, FormStrings.CuetextLpLosers);
+            SetCueText(textBoxBracketTypeFinals, FormStrings.CuetextLpFinals);
 
             // Created empty; loaded from file in OnLoad
             playerdb = new PlayerDatabase(this);
@@ -102,6 +110,8 @@ namespace smashgg_to_liquipedia
             {
                 richTextBoxLog.Text += "Set up API query class successfully\r\n";
             }
+
+            lpdbQuery = new LpdbBracketQuery(lpdbApiKey, this);
         }
 
         protected override async void OnLoad(EventArgs e)
@@ -442,248 +452,157 @@ namespace smashgg_to_liquipedia
             richTextBoxLog.Text += "Get tournament complete.\r\n";
         }
 
-        private void buttonFill_Click(object sender, EventArgs e)
+        private async void buttonFill_Click(object sender, EventArgs e)
         {
-            if (selectedEvent.Type == Event.EventType.Doubles)
-            {
-                FillDoubles();
-            }
-            else
-            {
-                FillSingles();
-            }
+            await RunLockedAsync(FillBracketsAsync);
         }
 
         /// <summary>
-        /// Fill the liquipedia brackets with singles data
+        /// Builds match2 brackets from the retrieved sets, using the bracket types entered for the
+        /// final, winners and losers brackets
         /// </summary>
-        /// <param name="sender">N/A</param>
-        /// <param name="e">N/A</param>
-        private void FillSingles()
+        private async Task FillBracketsAsync(CancellationToken cancellationToken)
         {
-            string output = string.Empty;
-            string finalBracketOutput = string.Empty;
-            Liquipedia.LpOutput lpout;
-            
-            if (radioButtonSmash.Checked)
+            match2Brackets = new List<Match2Bracket>();
+
+            if (setList == null || setList.Count == 0)
             {
-                lpout = new Liquipedia.LpOutput(selectedEvent, ref entrantList, ref setList, ref roundList, "stock");
-            }
-            else if (radioButtonFighters.Checked)
-            {
-                lpout = new Liquipedia.LpOutput(selectedEvent, ref entrantList, ref setList, ref roundList, "score");
-            }
-            else
-            {
-                lpout = new Liquipedia.LpOutput(selectedEvent, ref entrantList, ref setList, ref roundList);
+                richTextBoxLog.Text += "No sets retrieved. Get data for a bracket first.\r\n";
+                return;
             }
 
-            if (checkBoxWinners.Checked == true)
+            // The final bracket holds the last sets, so it is mapped first; the winners and losers
+            // brackets then continue from the sets feeding it
+            var parts = new[]
             {
-                if (richTextBoxExLpWinnersBracket.Text != FormStrings.CuetextLpWinners)
+                new { enabled = checkBoxGuessFinal.Checked, bracketType = textBoxBracketTypeFinals.Text,
+                      header = textBoxHeaderFinals.Text, side = Match2BracketMapper.Side.Any },
+                new { enabled = checkBoxWinners.Checked, bracketType = textBoxBracketTypeWinners.Text,
+                      header = textBoxHeaderWinners.Text, side = Match2BracketMapper.Side.Upper },
+                new { enabled = checkBoxLosers.Checked, bracketType = textBoxBracketTypeLosers.Text,
+                      header = textBoxHeaderLosers.Text, side = Match2BracketMapper.Side.Lower },
+            };
+
+            var mapper = new Match2BracketMapper(setList);
+            foreach (var part in parts)
+            {
+                string bracketType = LpdbBracketQuery.NormalizeBracketType(part.bracketType);
+                if (!part.enabled || bracketType == string.Empty)
                 {
-                    if (textBoxHeaderWinners.Text.Trim() != string.Empty)
-                    {
-                        output += textBoxHeaderWinners.Text + "\r\n" + richTextBoxExLpWinnersBracket.Text + "\r\n";
-                    }
-                    else
-                    {
-                        output += richTextBoxExLpWinnersBracket.Text + "\r\n";
-                    }
+                    continue;
+                }
+
+                List<LpdbMatch2> template = await GetBracketTemplateAsync(bracketType, cancellationToken);
+                if (template == null)
+                {
+                    continue;
+                }
+
+                var warnings = new List<string>();
+                Dictionary<string, Set> matches = mapper.Map(template, part.side, warnings);
+                match2Brackets.Add(new Match2Bracket(bracketType, part.header.Trim(), template, matches, warnings));
+
+                richTextBoxLog.Text += bracketType + ": filled " + matches.Count + " of " + template.Count + " matches\r\n";
+                foreach (string warning in warnings)
+                {
+                    richTextBoxLog.Text += "  " + warning + "\r\n";
                 }
             }
 
-            if (checkBoxLosers.Checked == true)
+            if (match2Brackets.Count == 0)
             {
-                if (richTextBoxExLpLosersBracket.Text != FormStrings.CuetextLpLosers)
-                {
-                    if (textBoxHeaderLosers.Text.Trim() != string.Empty)
-                    {
-                        output += textBoxHeaderLosers.Text + "\r\n" + richTextBoxExLpLosersBracket.Text + "\r\n";
-                    }
-                    else
-                    {
-                        output += richTextBoxExLpLosersBracket.Text + "\r\n";
-                    }
-                }
+                richTextBoxLog.Text += "No bracket type entered.\r\n";
+                return;
             }
 
-            // If the corresponding checkbox is not checked, skip that side of the bracket
-            if (checkBoxWinners.Checked)
+            int unplaced = mapper.UnplacedSetIds().Count;
+            if (unplaced > 0)
             {
-                lpout.fillBracketSingles((int)numericUpDownWinnersStart.Value, (int)numericUpDownWinnersEnd.Value, (int)numericUpDownWinnersOffset.Value, ref output, matchOffsetPerRound,
-                    checkBoxFillByes.Checked, checkBoxUnfinished.Checked, checkBoxMatchDetails.Checked, false);
-            }
-            if (checkBoxLosers.Checked)
-            {
-                lpout.fillBracketSingles(-(int)numericUpDownLosersStart.Value, -(int)numericUpDownLosersEnd.Value, (int)numericUpDownLosersOffset.Value, ref output, matchOffsetPerRound,
-                    checkBoxFillByes.Checked, checkBoxUnfinished.Checked, checkBoxMatchDetails.Checked, false);
-            }
-            if (checkBoxGuessFinal.Checked)
-            {
-                finalBracketOutput = richTextBoxExLpFinalBracket.Text;
-                if (radioButtonDEFinal.Checked)
-                {
-                    // Assume the highest round is grand finals, the lowest round is losers finals, etc.
-                    int gfround = roundList.Keys.Max();
-                    int wfround = roundList.Keys.Max() - 1;
-                    int lfround = roundList.Keys.Min();
-                    int lsround = roundList.Keys.Min() + 1;
-
-                    // Fill in R3
-                    lpout.fillBracketSingles(gfround, gfround, 3 - gfround, ref finalBracketOutput, matchOffsetPerRound,
-                        checkBoxFillByes.Checked, checkBoxUnfinished.Checked, checkBoxMatchDetails.Checked, false);
-
-                    // Fill in L2
-                    lpout.fillBracketSingles(lfround, lfround, 2 - Math.Abs(lfround), ref finalBracketOutput, matchOffsetPerRound,
-                        checkBoxFillByes.Checked, checkBoxUnfinished.Checked, checkBoxMatchDetails.Checked, true);
-
-                    // Fill in L1
-                    lpout.fillBracketSingles(lsround, lsround, 1 - Math.Abs(lsround), ref finalBracketOutput, matchOffsetPerRound,
-                        checkBoxFillByes.Checked, checkBoxUnfinished.Checked, checkBoxMatchDetails.Checked, false);
-
-                    // Fill in R1
-                    lpout.fillBracketSingles(wfround, wfround, 1 - wfround, ref finalBracketOutput, matchOffsetPerRound,
-                        checkBoxFillByes.Checked, checkBoxUnfinished.Checked, checkBoxMatchDetails.Checked, false);
-
-                    if (textBoxHeaderFinals.Text.Trim() != string.Empty)
-                    {
-                        output += textBoxHeaderFinals.Text + "\r\n" + finalBracketOutput.Trim();
-                    }
-                    else
-                    {
-                        output += finalBracketOutput.Trim();
-                    }
-                }
-                else if (radioButton4DE4S.Checked)
-                {
-                    // Assume the highest round is grand finals, the lowest round is losers finals, etc.
-                    int gfround = roundList.Keys.Max();
-                    int wfround = roundList.Keys.Max() - 1;
-                    int wsround = roundList.Keys.Max() - 2;
-                    int lfround = roundList.Keys.Min();
-                    int lsround = roundList.Keys.Min() + 1;
-                    int lqround = roundList.Keys.Min() + 2;
-                    int lt8round = roundList.Keys.Min() + 3;
-
-                    // Fill in R5
-                    lpout.fillBracketSingles(gfround, gfround, 5 - gfround, ref finalBracketOutput, matchOffsetPerRound,
-                        checkBoxFillByes.Checked, checkBoxUnfinished.Checked, checkBoxMatchDetails.Checked, false);
-
-                    // Fill in R4
-                    lpout.fillBracketSingles(wfround, wfround, 4 - wfround, ref finalBracketOutput, matchOffsetPerRound,
-                        checkBoxFillByes.Checked, checkBoxUnfinished.Checked, checkBoxMatchDetails.Checked, false);
-
-                    // Fill in R2
-                    lpout.fillBracketSingles(wsround, wsround, 2 - wsround, ref finalBracketOutput, matchOffsetPerRound,
-                        checkBoxFillByes.Checked, checkBoxUnfinished.Checked, checkBoxMatchDetails.Checked, false);
-
-                    // Fill in L4
-                    lpout.fillBracketSingles(lfround, lfround, 4 - Math.Abs(lfround), ref finalBracketOutput, matchOffsetPerRound,
-                        checkBoxFillByes.Checked, checkBoxUnfinished.Checked, checkBoxMatchDetails.Checked, false);
-
-                    // Fill in L3
-                    lpout.fillBracketSingles(lsround, lsround, 3 - Math.Abs(lsround), ref finalBracketOutput, matchOffsetPerRound,
-                        checkBoxFillByes.Checked, checkBoxUnfinished.Checked, checkBoxMatchDetails.Checked, false);
-
-                    // Fill in L2
-                    lpout.fillBracketSingles(lqround, lqround, 2 - Math.Abs(lqround), ref finalBracketOutput, matchOffsetPerRound,
-                        checkBoxFillByes.Checked, checkBoxUnfinished.Checked, checkBoxMatchDetails.Checked, false);
-
-                    // Fill in L1
-                    lpout.fillBracketSingles(lt8round, lt8round, 1 - Math.Abs(lt8round), ref finalBracketOutput, matchOffsetPerRound,
-                        checkBoxFillByes.Checked, checkBoxUnfinished.Checked, checkBoxMatchDetails.Checked, false);
-
-
-
-                    if (textBoxHeaderFinals.Text.Trim() != string.Empty)
-                    {
-                        output += textBoxHeaderFinals.Text + "\r\n" + finalBracketOutput.Trim();
-                    }
-                    else
-                    {
-                        output += finalBracketOutput.Trim();
-                    }
-                }
+                richTextBoxLog.Text += unplaced + " start.gg sets are not in any bracket\r\n";
             }
 
-            richTextBoxLog.Text += lpout.Log;
-            richTextBoxLpOutput.Text = BracketConversion.Instance.ConvertLegacySinglesBrackets(output.Trim());
+            richTextBoxLpOutput.Text = DescribeBrackets(match2Brackets);
         }
 
         /// <summary>
-        /// Fill the liquipedia brackets with doubles data
+        /// Gets a bracket template, from the local cache when possible and from LPDB otherwise
         /// </summary>
-        /// <param name="sender">N/A</param>
-        /// <param name="e">N/A</param>
-        private void FillDoubles()
+        /// <returns>The template's matches, or null if it could not be retrieved</returns>
+        private async Task<List<LpdbMatch2>> GetBracketTemplateAsync(string bracketType, CancellationToken cancellationToken)
         {
-            string output = string.Empty;
-            string finalBracketOutput = string.Empty;
-            Liquipedia.LpOutput lpout = new Liquipedia.LpOutput(selectedEvent, ref entrantList, ref setList, ref roundList);
-
-            if (checkBoxWinners.Checked == true)
+            List<LpdbMatch2> template;
+            try
             {
-                if (richTextBoxExLpWinnersBracket.Text != FormStrings.CuetextLpWinners)
+                template = await lpdbQuery.GetBracketAsync(bracketType, cancellationToken);
+            }
+            catch (Exception ex) when (ex is LpdbException || ex is HttpRequestException
+                || ex is System.Text.Json.JsonException || ex is KeyNotFoundException)
+            {
+                richTextBoxLog.Text += "Failed to get " + bracketType + ": " + ex.Message + "\r\n";
+                return null;
+            }
+
+            if (template == null || template.Count == 0)
+            {
+                richTextBoxLog.Text += "No bracket template found for " + bracketType + "\r\n";
+                return null;
+            }
+            return template;
+        }
+
+        /// <summary>
+        /// Lists the start.gg set placed in each template match
+        /// </summary>
+        private string DescribeBrackets(List<Match2Bracket> brackets)
+        {
+            var text = new System.Text.StringBuilder();
+            foreach (Match2Bracket bracket in brackets)
+            {
+                if (bracket.Header != string.Empty)
                 {
-                    output += textBoxHeaderWinners.Text + "\r\n" + richTextBoxExLpWinnersBracket.Text + "\r\n";
+                    text.AppendLine(bracket.Header);
                 }
-            }
+                text.AppendLine(bracket.BracketType);
 
-            if (checkBoxLosers.Checked == true)
-            {
-                if (richTextBoxExLpLosersBracket.Text != FormStrings.CuetextLpLosers)
+                foreach (LpdbMatch2 match in bracket.TemplateMatches)
                 {
-                    output += textBoxHeaderLosers.Text + "\r\n" + richTextBoxExLpLosersBracket.Text + "\r\n";
+                    string matchId = Match2BracketMapper.ToShortId(match.match2id);
+                    text.Append("  ").Append(matchId.PadRight(10));
+                    if (bracket.Matches.TryGetValue(matchId, out Set set))
+                    {
+                        text.Append(SlotName(set, 0)).Append(" vs ").Append(SlotName(set, 1));
+                        if (!string.IsNullOrEmpty(set.DisplayScore))
+                        {
+                            text.Append("  (").Append(set.DisplayScore).Append(")");
+                        }
+                    }
+                    else
+                    {
+                        text.Append("(no set)");
+                    }
+                    text.AppendLine();
                 }
+                text.AppendLine();
             }
+            return text.ToString().TrimEnd();
+        }
 
-            // If the corresponding checkbox is not checked, skip that side of the bracket
-            if (checkBoxWinners.Checked)
+        /// <summary>
+        /// Name of the entrant in a set slot, with team members joined
+        /// </summary>
+        private string SlotName(Set set, int slotIndex)
+        {
+            if (set.slots == null || set.slots.Count <= slotIndex || set.slots[slotIndex]?.entrant == null)
             {
-                lpout.fillBracketDoubles((int)numericUpDownWinnersStart.Value, (int)numericUpDownWinnersEnd.Value, (int)numericUpDownWinnersOffset.Value, ref output, matchOffsetPerRound,
-                    checkBoxFillByes.Checked, checkBoxUnfinished.Checked, false);
+                return "-";
             }
-            if (checkBoxLosers.Checked)
+
+            int entrantId = set.slots[slotIndex].entrant.id;
+            if (!entrantList.TryGetValue(entrantId, out Entrant entrant) || entrant.participants.Count == 0)
             {
-                lpout.fillBracketDoubles(-(int)numericUpDownLosersStart.Value, -(int)numericUpDownLosersEnd.Value, (int)numericUpDownLosersOffset.Value, ref output, matchOffsetPerRound,
-                    checkBoxFillByes.Checked, checkBoxUnfinished.Checked, false);
+                return "#" + entrantId;
             }
-            if (checkBoxGuessFinal.Checked)
-            {
-                finalBracketOutput = richTextBoxExLpFinalBracket.Text;
-
-                // Assume the highest round is grand finals, the lowest round is losers finals, etc.
-                int gfround = roundList.Keys.Max();
-                int wfround = roundList.Keys.Max() + 1;
-                int lfround = roundList.Keys.Min();
-                int lsround = roundList.Keys.Min() + 1;
-
-                // Fill in R3
-                lpout.fillBracketDoubles(gfround, gfround, 3 - gfround, ref finalBracketOutput, matchOffsetPerRound,
-                    checkBoxFillByes.Checked, checkBoxUnfinished.Checked, false);
-
-                // Fill in L2
-                lpout.fillBracketDoubles(lfround, lfround, 2 - Math.Abs(lfround), ref finalBracketOutput, matchOffsetPerRound,
-                    checkBoxFillByes.Checked, checkBoxUnfinished.Checked, true);
-
-                // Fill in L1
-                lpout.fillBracketDoubles(lsround, lsround, 1 - Math.Abs(lsround), ref finalBracketOutput, matchOffsetPerRound,
-                    checkBoxFillByes.Checked, checkBoxUnfinished.Checked, false);
-
-                // Fill in R1
-                lpout.fillBracketDoubles(wfround, wfround, 1 - wfround, ref finalBracketOutput, matchOffsetPerRound,
-                    checkBoxFillByes.Checked, checkBoxUnfinished.Checked, false);
-
-
-                // Replace L2 with R2 because liquipedia markup is inconsistent
-                finalBracketOutput = finalBracketOutput.Replace("l2m", "r2m");
-
-                output += "==Final Doubles Bracket==\r\n" + finalBracketOutput;
-            }
-
-            richTextBoxLpOutput.Text = BracketConversion.Instance.ConvertLegacyDoublesBrackets(output);
-            richTextBoxLog.Text += lpout.Log;
+            return string.Join(" / ", entrant.participants.Select(participant => participant.gamerTag));
         }
 
         /// <summary>
@@ -2048,9 +1967,9 @@ namespace smashgg_to_liquipedia
             numericUpDownPrizePool.Enabled = false;
 
             richTextBoxEntrants.Enabled = false;
-            richTextBoxExLpLosersBracket.Enabled = false;
-            richTextBoxExLpWinnersBracket.Enabled = false;
-            richTextBoxExLpFinalBracket.Enabled = false;
+            textBoxBracketTypeLosers.Enabled = false;
+            textBoxBracketTypeWinners.Enabled = false;
+            textBoxBracketTypeFinals.Enabled = false;
             richTextBoxLog.Enabled = false;
             richTextBoxWinners.Enabled = false;
             richTextBoxLosers.Enabled = false;
@@ -2111,9 +2030,9 @@ namespace smashgg_to_liquipedia
             numericUpDownPrizePool.Enabled = true;
 
             richTextBoxEntrants.Enabled = true;
-            richTextBoxExLpLosersBracket.Enabled = true;
-            richTextBoxExLpWinnersBracket.Enabled = true;
-            richTextBoxExLpFinalBracket.Enabled = true;
+            textBoxBracketTypeLosers.Enabled = true;
+            textBoxBracketTypeWinners.Enabled = true;
+            textBoxBracketTypeFinals.Enabled = true;
             richTextBoxLog.Enabled = true;
             richTextBoxWinners.Enabled = true;
             richTextBoxLosers.Enabled = true;
@@ -2206,6 +2125,7 @@ namespace smashgg_to_liquipedia
             }
 
             apiQuery.SetToken(authToken);
+            lpdbQuery.SetToken(lpdbApiKey);
         }
 
         /// <summary>
@@ -2942,80 +2862,14 @@ namespace smashgg_to_liquipedia
 
         private void radioButtonFinalBracket_CheckedChanged(object sender, EventArgs e)
         {
-            if (radioButton4DE4S.Checked) 
+            if (radioButton4DE4S.Checked)
             {
-                richTextBoxExLpFinalBracket.Text = @"{{LegacyBracket|Bracket/4U4L2DSL1D|4DE4SBracket2|type=solo|id=
-
-<!-- WINNERS BRACKET -->
-|r2m1p1= |r2m1p1flag= |r2m1p1score=
-|r2m1p2= |r2m1p2flag= |r2m1p2score=
-|r2m1win=
-
-|r2m2p1= |r2m2p1flag= |r2m2p1score=
-|r2m2p2= |r2m2p2flag= |r2m2p2score=
-|r2m2win=
-
-|r4m1p1= |r4m1p1flag= |r4m1p1score=
-|r4m1p2= |r4m1p2flag= |r4m1p2score=
-|r4m1win=
-
-<!-- LOSERS BRACKET -->
-|l1m1p1= |l1m1p1flag= |l1m1p1score=
-|l1m1p2= |l1m1p2flag= |l1m1p2score=
-|l1m1win=
-
-|l1m2p1= |l1m2p1flag= |l1m2p1score=
-|l1m2p2= |l1m2p2flag= |l1m2p2score=
-|l1m2win=
-
-|l2m1p1= |l2m1p1flag= |l2m1p1score=
-|l2m1p2= |l2m1p2flag= |l2m1p2score=
-|l2m1win=
-
-|l2m2p1= |l2m2p1flag= |l2m2p1score=
-|l2m2p2= |l2m2p2flag= |l2m2p2score=
-|l2m2win=
-
-|l3m1p1= |l3m1p1flag= |l3m1p1score=
-|l3m1p2= |l3m1p2flag= |l3m1p2score=
-|l3m1win=
-
-|l4m1p1= |l4m1p1flag= |l4m1p1score=
-|l4m1p2= |l4m1p2flag= |l4m1p2score=
-|l4m1win=
-
-<!-- GRAND FINALS -->
-|r5m1p1= |r5m1p1flag= |r5m1p1score=
-|r5m1p2= |r5m1p2flag= |r5m1p2score=
-|r5m1win=
-}}";
+                textBoxBracketTypeFinals.Text = "4U4L2DSL1D";
             }
-            else if (radioButtonDEFinal.Checked) 
+            else if (radioButtonDEFinal.Checked)
             {
-                richTextBoxExLpFinalBracket.Text = @"{{LegacyBracket|Bracket/2U2L1D|DEFinalSmwBracket|type=solo|id=
-
-<!-- FROM WINNERS -->
-|r1m1p1= |r1m1p1flag= |r1m1p1score=
-|r1m1p2= |r1m1p2flag= |r1m1p2score=
-|r1m1win=
-
-<!-- FROM LOSERS -->
-|l1m1p1= |l1m1p1flag= |l1m1p1score=
-|l1m1p2= |l1m1p2flag= |l1m1p2score=
-|l1m1win=
-
-<!-- LOSERS FINALS -->
-|r2m1p1= |r2m1p1flag= |r2m1p1score=
-|r2m1p2= |r2m1p2flag= |r2m1p2score=
-|r2m1win=
-
-<!-- GRAND FINALS -->
-|r3m1p1= |r3m1p1flag= |r3m1p1score=
-|r3m1p2= |r3m1p2flag= |r3m1p2score=
-|r3m1win=
-}}";
+                textBoxBracketTypeFinals.Text = "2U2L1D";
             }
-            
         }
     }
 }
