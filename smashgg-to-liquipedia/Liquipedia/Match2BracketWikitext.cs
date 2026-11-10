@@ -295,8 +295,7 @@ namespace smashgg_to_liquipedia.Liquipedia
             Entrant entrant = SlotEntrant(set, slotIndex);
             if (entrant == null)
             {
-                // TODO: bye / TBD opponent syntax; options.FillByes
-                return string.Empty;
+                return options.FillByes ? "{{LiteralOpponent|Bye}}" : string.Empty;
             }
 
             string score = showResult ? ConvertScore(set, slotIndex) : string.Empty;
