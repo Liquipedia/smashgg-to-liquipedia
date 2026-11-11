@@ -4,7 +4,7 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>smashgg_to_liquipedia</RootNamespace>
     <TargetFramework>net462</TargetFramework>
-    <Version>5.0.0</Version>
+    <Version>5.1.0</Version>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
